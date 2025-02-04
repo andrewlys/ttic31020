@@ -1,0 +1,188 @@
+\frenchspacing
+\documentclass{amsart}
+\usepackage{amssymb}
+\usepackage{fancyhdr}
+\usepackage{bbm}
+\usepackage{enumerate}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{algpseudocode}
+\pagestyle{fancy}
+\usepackage[margin=1in]{geometry}
+\newgeometry{left=1.5cm, right=1.5cm, top = 1.5cm}
+\fancyhfoffset[E,O]{0pt}
+\allowdisplaybreaks
+
+
+\rhead{Andrew Lys}   %% <-- your name here
+\chead{Problem Set 4}
+\cfoot{\thepage}
+\lhead{\today}
+
+
+
+%% your macros -->
+\newcommand{\nn}{\mathbb N}    %% naturals
+\newcommand{\zz}{\mathbb Z}    %%integers
+\newcommand{\rr}{\mathbb R}    %% real numbers
+\newcommand{\cc}{\mathbb C}    %% complex numbers
+\newcommand{\ff}{\mathbb F}
+\newcommand{\qq}{\mathbb Q}
+\newcommand{\cA}{\mathcal{A}}
+\newcommand{\cP}{\mathcal{P}}
+\newcommand{\cN}{\mathcal{N}}
+\newcommand{\cM}{\mathcal{M}}
+\newcommand{\cB}{\mathcal{B}}
+\newcommand{\cD}{\mathcal{D}}
+\newcommand{\cH}{\mathcal{H}}
+\newcommand{\limn}{\lim_{n \to \infty}} %%lim n to infty shorthand
+\newcommand{\va}{\mathbf{a}}
+\newcommand{\vb}{\mathbf{b}}
+\newcommand{\vc}{\mathbf{c}}
+\newcommand{\vx}{\mathbf{x}}
+\newcommand{\vy}{\mathbf{y}}
+\newcommand{\vv}{\mathbf{v}}
+\newcommand{\vw}{\mathbf{w}}
+\newcommand{\vu}{\mathbf{u}}
+\newcommand{\Per}{\widetilde{\mathrm{PERCEPTRON}}}
+\DeclareMathOperator{\var}{Var}  %% variance
+\DeclareMathOperator{\Aut}{Aut}
+\DeclareMathOperator{\Sym}{Sym}
+\DeclareMathOperator{\Cov}{Cov}
+\DeclareMathOperator{\sign}{sign}
+\newtheorem{theorem}{Theorem}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{exercise}{Exercise}[section]
+
+
+\begin{document}
+\noindent
+Problem Set 4\hfill \today  %% <-- Update Notes here ***
+\smallskip
+\hrule
+\smallskip
+\noindent
+Solutions by {\bf Andrew Lys} \qquad   %% <-- your name here ***
+  {\tt andrewlys(at)u.e.}      %% <-- your uchicago email address here ***
+
+\vspace{0.5cm}
+\section{Online Perceptron and Perceptron Analysis}
+\subsection{Implementing CONSISTENT}
+\begin{enumerate}[(a)]
+  \item 
+    Note, that if $\gamma(S)$, is the supremum over $w$, then we have:
+    \begin{align*}
+      \gamma(S) &\ge \min_{(x_i, y_i) \in S} \displaystyle\frac{y_i \langle \hat{w}, \phi(x_i)\rangle}{\|\hat{w}\|}
+    \end{align*}
+    And since $\hat{w}$ realizes $S$ with probability one, we have:
+    \[
+      y_i \langle \hat{w}, \phi(x_i) \rangle > 0
+    \]
+    for all $i$, and since $S$ is finite, we have:
+    \[
+      \min_{(x_i, y_i) \in S} \displaystyle\frac{y_i \langle \hat{w}, \phi(x_i)\rangle}{\|\hat{w}\|} = m > 0
+    \]
+    Therefore, $\gamma(S) \ge m > 0$
+  \item 
+    \[
+      M_t \le \frac{1 }{\gamma(S)^2}
+    \]
+    for all $t$, so 
+    \[
+      \lim\sup_{t\to\infty} M_t \le \frac{1}{\gamma(S)^2}
+    \]
+    Therefore, the possible number of mistakes is bounded by $\frac{1}{\gamma(S)^2}$. Further, the number of iterations is bounded by the number of mistakes, since there is an iteration only if a mistake was made. 
+  \item 
+    We implement the step as follows: 
+    \begin{algorithmic}[1]
+      \For{$(\phi(x_i), y_i) \in S'$}
+        \If{$y_i \langle w, \phi(x_i)\rangle \le 0$} 
+          \State \Return $(x_i, y_i)$
+        \EndIf
+      \EndFor
+    \end{algorithmic}
+    Before we invoke this iteration, we store 
+    \begin{algorithmic}
+      \State $S' \gets \{(\phi(x_i), y_i)\}_{i = 1}^m$
+    \end{algorithmic}
+    This operation takes $O(md)$ and takes up $O(m(d+1))= O(md)$ memory. This simplifies the computation of $\phi(x_i)$ in our iteration. 
+
+    On step $1$, we compute 
+    \[
+      y_i \cdot (w_1 \phi_1(x_i) + \ldots + w_d \phi_d(x_i))
+    \]
+    Which consists of $d$ multiplications inside the parantheses, $d-1$ additions inside the parentheses, and an additional multiplication by $y_i$. Thus, the total arithmetic is $O(2d) = O(d)$. Additionally, we compare to $0$, which is a constant time operation. 
+
+    We perform this step at most $|S| = m$ times, so the runtime of our iteration is $O(md)$. An iteration occurs only if a mistake happens as well, so the maximum number of times this iteration occurs is at most $M_t$, which is bounded by $\frac{1}{\gamma(S)^2}$. Thus, the total run time is bounded by
+    \[
+      O\left(\frac{md}{\gamma(S)^2}\right)
+    \]
+  \item 
+    Let $\mathcal{X} = \rr$ $\mathcal{Y} = \{\pm 1\}$, and $S = ((1, -1), (-1, -1))$. Clearly, this sample is not linearly separable, since for any sign of $w$, $\sign(w \cdot 1) \neq \sign(w \cdot (-1))$, unless $w$ is zero, in which case the sign is still $+1$, which is still wrong. WLOG, we may assume that $w_0 = 0$. 
+
+    If $w_t = 0$, then we have:
+    \[
+      \sign(w_t \cdot 1) = 1 \neq -1
+    \]
+    Then \[
+      w_{t+1} = 0 + (-1)(1) = -1
+    \]
+
+    If $w_t = -1$, then 
+    \[
+      \sign(w_t \cdot(-1)) = 1 \neq -1
+    \]
+    and then 
+    \[
+      w_{t+1} = -1 + (-1)(-1) = 0
+    \]
+    Thus, the algorithm never stops.
+\end{enumerate}
+\subsection{Statistical Guarantee}
+\begin{enumerate}[(a)]
+  \item 
+    Recall: 
+    \[
+      E_{S \sim \cD^m}[L_{\cD}(\tilde{\cA})] \le \frac{M }{m+1}
+    \]
+    therefore, for the learning rule of $\Per$, we have:
+    \[
+      E_{S \sim \cD^m}[L_{\cD}(\Per(S))] \le \frac{1}{\gamma(S)^2(m+1)} < \varepsilon
+    \]
+    Thus, the number of samples we need to ensure generalization error of at most $\varepsilon$ is 
+    \[
+      \frac{1}{\gamma(S)^2 \varepsilon } - 1 < m
+    \]
+  \item 
+    There is no contradiction because we are not actually learning the class of homogenous linear predictors on $\rr^d$. We are learning the class of homogenous linear predictors with feature map $\phi$. This has lower VCdim because the possible samples can only come from the image of the feature map, which need not be onto $\rr^d$. 
+\end{enumerate}
+\section{$0/1$ Loss vs Squared Loss vs Hinge Loss}
+\begin{enumerate}[(a)]
+  \item 
+    Note that the sample $S$ is finite, so $\Gamma_\cH(S) < \infty$. Thus, $\exists h^\ast$, such that 
+    \[
+      \inf_{h \in \cH} L_S^{01}(h) = L_S^{01}(h^\ast) = 0
+    \]
+    Since, 
+    \[
+      |\{L_S^{01}(h) : h \in \cH\}|\le \Gamma_\cH(S)
+    \]
+    so we are minimizing over a finite set. 
+    
+    Additionally, since $L_S^{01}(h^\ast) = 0$, we have that $h^\ast(x_i) = y_i$ for all $i$. 
+
+    Now we compute the square loss of $h^\ast$, which we have determined is indeed in our hypothesis class. 
+
+    \begin{align*}
+      L_S^{sq}(h^\ast) &= \frac{1}{m }\displaystyle\sum_{i = 1}^{m }\ell^{sq}(h^\ast (x_i);y_i) = \frac{1}{m }\displaystyle\sum_{i = 1}^{m }(y_i - h^\ast(x_i))^2 = 0
+    \end{align*}
+    Therefore, we cannot have $\hat{h}_{sq}$ have error greater than $0.5$, since $h^\ast$ would have better error than it, and thus be better than the optimal. 
+  \item 
+    It is indeed possible for this to occur. Consider $h^\ast$ as above, and simply let $h(x_i) = 2 h^\ast(x_i)$. It is clear that $h$ is still a linear predictor, and we have that $h$ minimizes the hinge loss, since 
+    \[
+      \ell^{hinge}(h(x_i); y_i)= [1 - 2y_ih^\ast(x_i)]_+ = [1 - 2]_+ = 0
+    \]
+    However, clearly, the $0/1$ loss is $1$, since every prediction is either $+2$ or $-2$, which is always wrong.
+\end{enumerate}
+\end{document}
