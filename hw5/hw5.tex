@@ -1,0 +1,127 @@
+\frenchspacing
+\documentclass{amsart}
+\usepackage{amssymb}
+\usepackage{fancyhdr}
+\usepackage{bbm}
+\usepackage{enumerate}
+\usepackage{graphicx}
+\usepackage{tikz}
+\pagestyle{fancy}
+\usepackage[margin=1in]{geometry}
+\newgeometry{left=1.5cm, right=1.5cm, top = 1.5cm}
+\fancyhfoffset[E,O]{0pt}
+\allowdisplaybreaks
+
+
+\rhead{Andrew Lys}   %% <-- your name here
+\chead{Problem Set 5}
+\cfoot{\thepage}
+\lhead{\today}
+
+
+
+%% your macros -->
+\newcommand{\nn}{\mathbb N}    %% naturals
+\newcommand{\zz}{\mathbb Z}    %%integers
+\newcommand{\rr}{\mathbb R}    %% real numbers
+\newcommand{\cc}{\mathbb C}    %% complex numbers
+\newcommand{\ff}{\mathbb F}
+\newcommand{\qq}{\mathbb Q}
+\newcommand{\cA}{\mathcal{A}}
+\newcommand{\cP}{\mathcal{P}}
+\newcommand{\cN}{\mathcal{N}}
+\newcommand{\cM}{\mathcal{M}}
+\newcommand{\cB}{\mathcal{B}}
+\newcommand{\limn}{\lim_{n \to \infty}} %%lim n to infty shorthand
+\newcommand{\va}{\mathbf{a}}
+\newcommand{\vb}{\mathbf{b}}
+\newcommand{\vc}{\mathbf{c}}
+\newcommand{\vx}{\mathbf{x}}
+\newcommand{\vy}{\mathbf{y}}
+\newcommand{\vv}{\mathbf{v}}
+\newcommand{\vw}{\mathbf{w}}
+\newcommand{\vu}{\mathbf{u}}
+\newcommand{\hinge}{\hat{h}^{\mathrm{hinge}}}
+\DeclareMathOperator{\var}{Var}  %% variance
+\DeclareMathOperator{\Aut}{Aut}
+\DeclareMathOperator{\Sym}{Sym}
+\DeclareMathOperator{\Cov}{Cov}
+\DeclareMathOperator{\lin}{lin}
+\newtheorem{theorem}{Theorem}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{exercise}{Exercise}[section]
+
+
+\begin{document}
+\noindent
+Problem Set 5   \hfill \today  %% <-- Update Notes here ***
+\smallskip
+\hrule
+\smallskip
+\noindent
+Solutions by {\bf Andrew Lys} \qquad   %% <-- your name here ***
+  {\tt andrewlys(at)u.e.}      %% <-- your uchicago email address here ***
+
+\vspace{0.5cm}
+
+\section{0/1 Loss vs Hinge Loss vs Square Loss}
+\begin{enumerate}[(a)]
+  \item 
+    \begin{enumerate}[(i)]
+      \item 
+        Let \[
+          S = \{((1, 40), -1), ((2,1),1), \ldots, ((7,1),1), ((2, -1),-1), \ldots ,((6, -1), -1)\}
+        \]
+      \item 
+        Letting $w = (0, 1)$, we have that the decision boundary occurs at $y = \pm 1$, so all points are correctly classified except for the first point, i.e. 
+        \[
+          L_S^{01}(h_w) = \displaystyle\frac{1}{12} < 0.1
+        \]
+        It is visually obvious that this is the only linear predictor in which only one point is misclassified. 
+        The only loss comes from $((1, 40), -1)$, so the hinge loss is just 
+        \[
+          L_S^{\mathrm{hinge}}(h_w) = \displaystyle\frac{1}{11} [1 - (-1)(40)]_+ = \displaystyle\frac{41}{11}
+        \]
+      \item 
+        We calculate the hinge loss minimizer via the methods of LaGrange Optimization. 
+
+        Note that the only way we change $w$ is by increasing the angle with the $x$-axis, since we are trying to minimize the loss added by the first point. Thus, in our hinge loss calculation, all the points below the $x$-axis will not add any more loss, so we may just disregard them, and restrict $w_1 \le 0$ and $w_2 \ge 0$
+
+        Our LaGrangian is as follows:
+        \[
+          \mathcal{L} = \displaystyle\frac{1}{11} \langle (1, 40), (w_1, w_2)\rangle + \displaystyle\frac{1}{11}\displaystyle\sum_{k = 2 }^{7 }1 - \langle (k, 1), (w_1, w_2) \rangle  - \lambda (w_1^2 + w_2^2  - 1) - \mu_1 x - \mu_2 y
+        \]
+
+        Solving this problem, we get:
+        \[
+          w = (-1, 0)
+        \]
+        so our predictor is 
+        \[
+          \hat{h}^{\mathrm{hinge}}(x) = \langle (-1, 0), x\rangle 
+        \]
+
+        We can clearly see that this predictor correctly classifies $(1, 40)$, but incorrectly classifies the rest of the positive points, but correctly classifies all of the negative points. Thus the $01$ loss is:
+        \[
+          L_S^{01}(\hinge) = \displaystyle\frac{6 }{12} = 0.5
+        \]
+        The hinge loss is given from the positive signs as:
+        \[
+          \displaystyle\frac{1}{12}\displaystyle\sum_{k=2 }^{7 } 1 - (-1)(k) = 2.75
+        \]
+    \end{enumerate}
+\end{enumerate}
+\section{Kernel Perceptron}
+\begin{enumerate}[(a)]
+  \item 
+    Base case:
+      \[
+        w_0 = 0 \in \lin\{\phi(x_1), \ldots, \phi(x_m)\}
+      \]
+    Inductive Step:
+    
+    Suppose that $w_t \in \lin\{\phi(x_1), \ldots, \phi(x_m)\}$. If there is no mistake in the process, then $w_{t+1} = w_t$
+
+\end{enumerate}
+\end{document}
