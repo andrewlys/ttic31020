@@ -6,6 +6,7 @@
 \usepackage{enumerate}
 \usepackage{graphicx}
 \usepackage{tikz}
+\usepackage{algpseudocode}
 \pagestyle{fancy}
 \usepackage[margin=1in]{geometry}
 \newgeometry{left=1.5cm, right=1.5cm, top = 1.5cm}
@@ -42,11 +43,13 @@
 \newcommand{\vw}{\mathbf{w}}
 \newcommand{\vu}{\mathbf{u}}
 \newcommand{\hinge}{\hat{h}^{\mathrm{hinge}}}
+\newcommand{\TIMEk}{\mathrm{TIME}_k}
 \DeclareMathOperator{\var}{Var}  %% variance
 \DeclareMathOperator{\Aut}{Aut}
 \DeclareMathOperator{\Sym}{Sym}
 \DeclareMathOperator{\Cov}{Cov}
 \DeclareMathOperator{\lin}{lin}
+\DeclareMathOperator{\sign}{sign}
 \newtheorem{theorem}{Theorem}
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}
@@ -121,7 +124,109 @@ Solutions by {\bf Andrew Lys} \qquad   %% <-- your name here ***
       \]
     Inductive Step:
     
-    Suppose that $w_t \in \lin\{\phi(x_1), \ldots, \phi(x_m)\}$. If there is no mistake in the process, then $w_{t+1} = w_t$
+    Suppose that $w_t \in \lin\{\phi(x_1), \ldots, \phi(x_m)\}$. If there is no mistake in the process, then $w_{t+1} = w_t$. If there is a mistake then
+    \[
+      w_{t+1} = w_t - y_i \phi(x_i) \in \lin\{\phi(x_1), \ldots, \phi(x_m)\}
+    \]
 
+    Thus, $w_{t}$ is in the span of $\{\phi(x_1), \ldots, \phi(x_m)\}$. 
+  \item 
+    The updated algorithm is as follows:
+    \begin{algorithmic}
+      \State $\alpha_0 \gets 0$ 
+      \State $t \gets 0$
+      \While{$\exists i : \sign\left(\displaystyle\sum_{j = 1}^{m}\alpha_t[j] K(x_j, x_i)\right) \neq y_i $}
+        \State $\alpha_{t+1} = \alpha_t + y_i e_i$
+        \State $t \gets t+1$
+      \EndWhile
+      \State \Return $\alpha_t$
+    \end{algorithmic}
+  \item 
+    We focus on the while part of the iteration. We need to compute 
+    \[
+      G[i]\alpha_t \neq y_i
+    \]
+    for $i = 1$ to $m$ until there is a mistake. 
+    \[
+      G[i] = \begin{bmatrix}
+        K(x_i, x_1) & K(x_i, x_2) & \ldots & K(x_i, x_m)
+      \end{bmatrix}
+    \]
+    So for each $i$ we have to make $\TIMEk \cdot m$ calculations. 
+
+    Assuming that arithmetic operations are $O(1)$, $G[i] \alpha_t$ takes $m$ multiplication operations, and $m-1$ summation operations, and comparing to $y_i$ is one operation, so our total runtime per each while check is:
+
+    \[
+      O(\TIMEk\cdot m+ 2m) = O(\TIMEk \cdot m)
+    \]
+
+    In the worst case, each iteration has to search the entire data set for a mistake, so the runtime for the entire while loop is $O(\TIMEk \cdot m^2)$. 
+
+    Once we find a mistake, there are 2 arithmetic operations, so the overall runtime is $O(\TIMEk \cdot m^2)$.
+
+    The challenge is done by pre-computing the matrix, which takes $O(\TIMEk + m^2)$ storing it, requiring $O(m^2 + m) = O(m^2)$, and working the while loop off of this stored matrix. This decreases the time complexity, per loop, to $O(m^2)$ and thus the overall time-complexity is $O(\TIMEk + m^2)$.
+  \item 
+    As we derived in homework 4, the number of mistakes, $M_t$, is bounded by $1/\gamma(S)^2$. $\gamma(S)$ was defined as:
+    \[
+      \gamma(S) := \sup_w \min_{(x_i, y_i) \in S}\displaystyle\frac{y_i \langle w, \phi(x_i) \rangle}{\|w\|}
+    \]
+    and assuming that all the feature vectors are norm $1$. However, our feature vectors are not necessarily norm $1$, so we normalize by dividing by $\|\phi(x_i)\|$ or $\sqrt{K(x_i, x_i)}$. So we actually have 
+    \[
+      \gamma(S) := \sup_w \min_{(x_i, y_i) \in S}\displaystyle\frac{y_i \langle w, \phi(x_i) \rangle}{\|w\|\sqrt{K(x_i, x_i)}}
+    \]
+    By assumption, we have:
+    \[
+      \gamma(S) \ge \min_{(x_i, y_i) \in S} \displaystyle \displaystyle\frac{y_i \langle w^\ast, \phi(x_i) \rangle }{\|w^\ast\|\sqrt{K(x_i, x_i)}} \ge \displaystyle\frac{\gamma}{\|w^\ast\|\max_i \sqrt{K(x_i, x_i)}}
+    \]
+    Since the number of iterations, $T$ is bounded by the number of mistakes, $\sup_t M_t$, since an iteration only occurs if a mistake occurs, we have:
+    \[
+      T \le \sup_t M_t \le \displaystyle\frac{1}{\gamma(S)^2} \le \displaystyle\frac{\|w^\ast\|^2 \max_i K(x_i, x_i)}{\gamma^2}
+    \]
+    
+    The time to compute a single iteration was given above as bounded by $O(\TIMEk \cdot m^2)$ operations, and we only have to store $G[i]$ and $\alpha_t$, which is a total of $O(m)$ memory. Thus, if the number of iterations is bounded by $T_{max}$, we have that the total runtime is bounded by:
+    \[
+      O(\TIMEk \cdot m^2 \cdot T_{max})
+    \]
+    and the total memory space is bounded by 
+    \[
+      O(m)
+    \]
+  \item 
+    The perceptron algorithm returns $w_T$, which may be written as 
+    \[
+      \Phi^\intercal \alpha_T
+    \]
+    Where $\alpha_T$ is the vector returned in part b. Thus, to compute $\sign(\langle w_T, \phi(x) \rangle)$, we have to do the following:
+    \begin{align*}
+      \langle \Phi^\intercal \alpha_T, \phi(x) \rangle &= \alpha_T^\intercal \Phi \phi(x) \\
+                                             &= \alpha_T^\intercal \begin{bmatrix}
+                                              \phi(x_1)^\intercal \\
+                                              \vdots \\
+                                              \phi(x_m)^\intercal
+                                             \end{bmatrix} \phi(x) = \alpha_T^\intercal \begin{bmatrix}
+                                              K(x_1, x)\\
+                                              \vdots \\
+                                              K(x_m, x)
+                                             \end{bmatrix}
+    \end{align*}
+    Thus, we need to store $\alpha_t$ in our predictor instance, and when we predict, we need to compute $K(x_1, x) \ldots, K(x_m, x)$, and dot it with $\alpha_T$. Computing this vector takes $O(m \cdot \TIMEk)$, and requires us to store $K(x_1, \cdot), \ldots K(x_m, \cdot)$. This means that we store $m$ floats, and $m$ pointers, for a total of $O(m)$ memory space. To compute the prediction runtime, we do $m$ kernel operations, for a total of $O(m \cdot \TIMEk)$, but then we do $2m$ arithmetic operations, for a total of 
+    \[
+      O(m \cdot \TIMEk)
+    \]
+    run time complexity. 
+\end{enumerate}
+\section{Kernel Ridge Regression}
+\begin{enumerate}[(a)]
+  \item 
+    Note that we can write:
+    \[
+      w(\alpha) = \displaystyle\sum_{i = 1}^{m }\alpha_i \phi(x_i) = \Phi^\intercal \alpha
+    \]
+    \begin{align*}
+      L_{S, \lambda}(\alpha) &= \displaystyle\frac{1}{m } \| \Phi w(\alpha) - y\|^2 + \lambda \|w(\alpha)\|^2/2\\
+                             &= \frac1{m} \| \Phi \Phi^\intercal \alpha - y\|^2 + \lambda \|\Phi^\intercal \alpha\|^2/2 \\
+                             &= \frac1{m} \| G\alpha - y\|^2 + \lambda \frac{\alpha^\intercal \Phi \Phi^\intercal \alpha}{2}\\
+                             &= \frac1{m} \|G\alpha - y\|^2 + \displaystyle\frac{\lambda }{2}\alpha^\intercal G \alpha 
+    \end{align*}
 \end{enumerate}
 \end{document}
