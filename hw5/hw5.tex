@@ -228,5 +228,48 @@ Solutions by {\bf Andrew Lys} \qquad   %% <-- your name here ***
                              &= \frac1{m} \| G\alpha - y\|^2 + \lambda \frac{\alpha^\intercal \Phi \Phi^\intercal \alpha}{2}\\
                              &= \frac1{m} \|G\alpha - y\|^2 + \displaystyle\frac{\lambda }{2}\alpha^\intercal G \alpha 
     \end{align*}
+    \item 
+    With elementary matrix calculus, we can calculate the derivative of the above expression with respect to $\alpha$.
+    
+    Recall:
+    \[
+    \frac{d}{d u} \|u\|^2 = 2u
+    \]
+    \[
+    \frac{d}{d\alpha} \alpha^\intercal G \alpha = 2G\alpha
+    \]
+    Thus, we have:
+    \begin{align*}
+      \frac{d }{d\alpha} L_{S, \lambda} &= \frac{d}{d\alpha} \left(\frac1{m} \|G\alpha - y\|^2 + \displaystyle\frac{\lambda }{2}\alpha^\intercal G \alpha\right)\\
+                                        &= \frac1{m} \frac{d}{d\alpha} \|G\alpha - y\|^2 + \displaystyle\frac{\lambda }{2}\frac{d}{d\alpha} \alpha^\intercal G \alpha\\
+                                        &= \frac1{m} 2G^\intercal (G\alpha - y) + \lambda G\alpha\\
+                                        &= \frac2{m} G^\intercal G\alpha - \frac2{m} G^\intercal y + \lambda G\alpha\\
+                                        &= \frac2{m} G^\intercal G\alpha + \lambda G\alpha - \frac2{m} G^\intercal y = 0\\
+      \frac2{m} G^\intercal y &=  \frac2{m} G^\intercal G\alpha + \lambda G\alpha  \\
+      \frac2{m} G y &= \left(\frac2{m} G^2 + \lambda G\right)\alpha\\
+      \implies \alpha &= \left(\frac2{m} G^2 + \lambda G\right)^{-1} \frac2{m} G y
+    \end{align*}
+    Thus, this is the optimal $\alpha$, and we have:
+    \[
+    \hat{\alpha} = \left(\frac2{m} G^2 + \lambda G\right)^{-1} \frac2{m} G y
+    \]
+    \item 
+      Using the same idea as in (e), we have: 
+      \begin{align*}
+        \langle \hat{w}_\lambda , \phi(x)\rangle &= \langle \Phi \hat{\alpha}, \phi(x)\rangle\\
+                                                 &= \hat{\alpha}^\intercal \Phi \phi(x)\\
+                                                 &= \hat{\alpha}^\intercal \begin{bmatrix}
+                                                  \phi(x_1)^\intercal \\
+                                                  \vdots \\
+                                                  \phi(x_m)^\intercal
+                                                 \end{bmatrix} \phi(x) = \hat{\alpha}^\intercal \begin{bmatrix}
+                                                  K(x_1, x)\\
+                                                  \vdots \\
+                                                  K(x_m, x)
+                                                 \end{bmatrix}\\
+                                                 &=\begin{bmatrix}
+                                                  K(x_1, x) & \ldots & K(x_m, x)
+                                                 \end{bmatrix} \left(\frac2{m} G^2 + \lambda G\right)^{-1} \frac2{m} G y
+      \end{align*}
 \end{enumerate}
 \end{document}
