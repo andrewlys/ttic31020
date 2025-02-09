@@ -249,9 +249,13 @@ Solutions by {\bf Andrew Lys} \qquad   %% <-- your name here ***
       \frac2{m} G y &= \left(\frac2{m} G^2 + \lambda G\right)\alpha\\
       \implies \alpha &= \left(\frac2{m} G^2 + \lambda G\right)^{-1} \frac2{m} G y
     \end{align*}
+    Since $G$ is positive definite, we have that $G^{-1}$ exists, so we may simplify to:
+    \[
+      \alpha = \left(\frac2{m} G + \lambda I_m\right)^{-1} \frac2{m}  y
+      \]
     Thus, this is the optimal $\alpha$, and we have:
     \[
-    \hat{\alpha} = \left(\frac2{m} G^2 + \lambda G\right)^{-1} \frac2{m} G y
+    \hat{\alpha} = \left( G + \frac{m }{2}\lambda I_m\right)^{-1}  y
     \]
     \item 
       Using the same idea as in (e), we have: 
