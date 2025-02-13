@@ -45,6 +45,7 @@
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}
 \newtheorem{exercise}{Exercise}[section]
+\renewcommand{\thesubsection}{\arabic{subsection}}
 
 
 \begin{document}
@@ -54,13 +55,18 @@ Problem Set 6   \hfill \today  %% <-- Update Notes here ***
 \hrule
 \smallskip
 \noindent
-Solutions by {\bf Andrew Lys} \qquad   %% <-- your name here ***
+Solutions by {\bf Andrew Lys} \qquad Collaborated with {\bf Sam Fine}   %% <-- your name here ***
   {\tt andrewlys (at) u.e.}      %% <-- your uchicago email address here ***
 
 \vspace{0.5cm}
 
-\section{Gaussian Mixtures}
-\section{Modeling Text Documents}
+\begin{center}
+\LARGE Gaussian Mixtures
+\end{center}
+\subsection{}
+\begin{center}
+\LARGE Modeling Text Documents
+\end{center}
 \subsection{A Simple Model}
 
 \begin{enumerate}[(a)]
@@ -214,4 +220,92 @@ Solutions by {\bf Andrew Lys} \qquad   %% <-- your name here ***
 		So we have the following simplification for $w$:
 		\[w = \left((N-1)\log\frac{n(0)}{n(1)} + \sum_{i = 1}^{N} \log \frac{n_i(1, 0)}{n_i(0,0)}, \log \frac{n_1(1,1)n_1(0,0)}{n_1(1,0)n_1(0,1)}, \ldots, \log \frac{n_N(1,1)n_N(0,0)}{n_N(1,0)n_N(0,1)}\right)\]
 \end{enumerate}
+\subsection{Adding a Prior}
+\begin{enumerate}[(a)]
+	\item 
+		The MAP estimate is defined as follows:
+		\[\hat{\theta} = \arg\max_\theta p(\theta |S)\]
+		In our case, 
+		\[\theta = (p, \{p_y\})\]
+		Where we define:
+		\[p = P(y = 1)\]
+		\[p_y[i] = P(x[i] = 1|y)\]
+		and $p_y$ is a vector of $N$ elements.
+		Let $S$ be a sample of $n$ i.i.d. points.
+		\[S = ((x_1, y_1), \ldots, (x_n, y_n))\]
+		our posterior distribution, $p(\theta|S)$ is given by:
+		\begin{align*}
+			p(p, \{p_y\}|S) &= \frac{p(S|p, \{p_y\}) p(p, \{p_y\})}{p(S)}\\
+			&= \frac{p(X|Y, p, \{p_y\}) p(Y|p, \{p_y\}) p(p, \{p_y\})}{p(S)}\\
+			&= \frac{p(X|Y, \{p_y\})p(Y|p)p(p, \{p, p_y\})}{p(X|Y)p(Y)}
+		\end{align*}
+		where $X$ is the vector of $x_i$'s and $Y$ is the vector of $y_i$'s.
+
+		Note that, we are not conditioning the denominator with respect to the parameters we are optimizing over.
+		The denominator is the distribution over the distributions of $p$ and $\{p_y\}$.
+		Therefore, we can ignore it in the optimization problem.
+		\begin{align*}
+			\hat{\theta} &= \arg\max_{p, \{p_y\}} p(X|Y, \{p_y\})p(Y|p)p(p, \{p_y\})\\
+		\end{align*}
+		We break this expression down, term by term, first focusing on the last term.
+		\begin{align*}
+			p(p, \{p_y\}) &= p(p)p(\{p_y\}) = f_{Dir(1)}(p) p(p_1)p(p_0)\\
+			&= f_{Dir(\alpha)}(p_1)f_{Dir(\alpha)}(p_0)\\
+			&= \frac{1}{Z(\alpha)^2} \prod_{i=1}^{N} p_1[i]^{\alpha - 1}p_0[i]^{\alpha - 1}\\
+		\end{align*}
+		Since $Z(\alpha)^2$ is fixed, we can ignore it in the expression for $\hat{\theta}$.
+		Now we focus on the second term.
+		\begin{align*}
+			p(Y|p) &= P(Y_1 = y_1, \ldots, Y_n = y_n|p) = \prod_{i=1}^{n} P(Y_i = y_i|p)\\
+			&= \prod_{i=1}^{n } p^{y_i}(1-p)^{1-y_i}\\
+		\end{align*}
+		Now we focus on the first term.
+		\begin{align*}
+			p(X|Y, \{p_y\}) &= P(X_1 = x_1, \ldots, X_n = x_n|Y_1 = y_1, \ldots, Y_n = y_n, \{p_y\})\\
+			&= \prod_{i=1}^{n} P(X_i = x_i|Y_1 = y_1, \ldots, Y_n = y_n, \{p_y\})\\
+			&= \prod_{i=1}^{n} P(X_i = x_i|Y_i = y_i, \{p_y\})\\
+			&= \prod_{i=1}^{n} P(X_i[1] = x_i[1], \ldots, X_i[N] = x_i[N]|Y_i = y_i, \{p_y\})\\
+			&= \prod_{i=1}^{n} \prod_{j=1}^{N} P(X_i[j] = x_i[j]|Y_i = y_i, \{p_y\})\\
+		\end{align*}
+		Since $\log$ is monotone, we can take the $\log$ of our expression to get the $\arg\max$.
+		\begin{align*}
+			\hat{\theta}&=\arg\max_{p, \{p_y\}} \sum_{i=1}^{n}\sum_{j=1}^{N} \log P(X_i[j] = x_i[j]|Y_i = y_i, \{p_y\}) \\
+			&+ \sum_{i=1}^{n} y_i\log(p) + (1-y_i)\log(1-p) \\
+			&+ \sum_{i=1}^{N}\sum_{y \in \{0,1\}}(\alpha - 1)\log(p_y[i])\\
+		\end{align*}
+		First, we get $\hat{p}$ by differentiating with respect to $p$ and setting it to zero.
+		\begin{align*}
+			\frac{d}{dp}\hat{\theta} &= \sum_{i=1}^{n} \frac{y_i}{p} - \frac{1-y_i}{1-p} = 0\\
+			\sum_{i=1}^{n} \frac{y_i}{p} &= \sum_{i=1}^{n} \frac{1-y_i}{1-p}\\
+			\frac{1-p}{p} &= \frac{\sum_{i=1}^{n} 1-y_i}{\sum_{i=1}^{n} y_i}\\
+			p &= \frac{\sum_{i=1}^{n} y_i}{n} = \frac{n(1)}{n}
+		\end{align*}
+		Where $n(y)$ is the number of $y_i$'s that are equal to $y$.
+		Before we try and solve for $p_y[i]$, we can do a better job at simplifying the first term. 
+		\begin{align*}
+			\log P(X_i[j] = x_i[j]|Y_i = y_i, \{p_y\}) &= [[x_i[j] = 1]]\log(p_{y_i}[j]) + [[x_i[j] = 0]] \log(1-p_{y_i}[j])\\
+			&= \log(p_{y_i}[j]^{x_i[j]}(1-p_{y_i}[j])^{1-x_i[j]})\\
+			&= \sum_{y \in \{0, 1\}} [[y_i = y]]\log(p_{y}[j]^{x_i[j]}(1-p_{y}[j])^{1-x_i[j]})\\
+			\implies & \sum_{i=1}^{n}\sum_{j=1}^{N} \log P(X_i[j] = x_i[j]|Y_i = y_i, \{p_y\})\\
+			&=\sum_{i=1}^{n} \sum_{j=1}^{N} \sum_{y \in \{0, 1\}} [[y_i = y]]\log(p_{y}[j]^{x_i[j]}(1-p_{y}[j])^{1-x_i[j]})\\ 
+			&= \sum_{j=1}^{N} \sum_{i=1}^{n} \sum_{y \in \{0, 1\}} \sum_{x \in \{0, 1\}} [[y_i = y \land x_i[j] = x]]\log(p_{y}[j]^{x}(1-p_{y}[j])^{1-x})\\
+			&= \sum_{j=1}^{N} \sum_{y \in \{0, 1\}} \sum_{x \in \{0, 1\}} \log(p_{y}[j]^{x}(1-p_{y}[j])^{1-x})\sum_{i=1}^{n}[[y_i = y \land x_i[j] = x]]\\
+			&= \sum_{j=1}^{N} \sum_{y \in \{0, 1\}} \sum_{x \in \{0, 1\}} \log(p_{y}[j]^{x}(1-p_{y}[j])^{1-x})n_j(x, y)\\
+			&= \sum_{j=1}^{N} \sum_{y \in \{0, 1\}} \sum_{x \in \{0, 1\}} n_j(x, y) (x\log(p_{y}[j]) + (1-x)\log(1-p_{y}[j]))\\
+		\end{align*}
+		Now we differentiate with respect to $p_{y}[j]$ and set equal to zero.
+		\begin{align*}
+			\frac{d}{dp_{y}[j]}\hat{\theta} &= \sum_{x \in \{0, 1\}} n_j(x, y)\left(\frac{x}{p_{y}[j]} - \frac{1-x}{1-p_{y}[j]}\right) + (\alpha - 1)\frac{1}{p_{y}[j]} \\ 
+			&= n_j(1,y)\frac{1}{p_y[j]} - n_j(0,y)\frac{1}{1-p_y[j]} + (\alpha - 1)\frac{1}{p_{y}[j]} = 0\\
+			\implies \frac{1}{1-p_y[j]}n_j(0,y)&= \frac{1}{p_y[j]}(n_j(1,y) + (\alpha - 1)) \\
+			\implies \frac{1-p_y[j]}{p_y[j]} &= \frac{n_j(0, y)}{n_j(1, y) + (\alpha - 1)}\\
+			\implies p_y[j] &= \frac{n_j(1,y) + (\alpha - 1)}{n_j(0, y) + n_j(1, y) + (\alpha - 1)}\\
+			\implies \hat{p}_y[j]&= \frac{n_j(1,y) + (\alpha - 1)}{n(y) + (\alpha - 1)}\\
+		\end{align*}
+
+
+
+\end{enumerate}
+\subsection{Multiple Classes}
+\subsection{Adding Dependencies: A Markov Model}
 \end{document}
