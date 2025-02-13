@@ -179,5 +179,22 @@ Solutions by {\bf Andrew Lys} \qquad   %% <-- your name here ***
 		\begin{align*}
 			r(x) &= \log\left(\frac{p}{1-p}\right) + \sum_{i=1}^{N}\log\left(\frac{p_i(x[i]|1)}{p_i(x[i]|0)}\right)\\
 		\end{align*}	
+	\item 
+		We can simplify the discriminant by noting
+		\begin{align*}
+			p_i(x|y) &= p_i(1|y)^{x}p_i(0|y)^{1-x}\\
+		\end{align*}
+		Giving us
+		\begin{align*}
+			r(x) &= \log\left(\frac{p}{1-p}\right) + \sum_{i=1}^{N}\log\left(\frac{p_i(1|1)^{x[i]}p_i(0|1)^{1-x[i]}}{p_i(1|0)^{x[i]}p_i(0|0)^{1-x[i]}}\right)\\
+			&= \log\left(\frac{p}{1-p}\right) + \sum_{i=1}^{N}\left(x[i]\log\left(\frac{p_i(1|1)}{p_i(1|0)}\right) + (1-x[i])\log\left(\frac{p_i(0|1)}{p_i(0|0)}\right)\right)\\
+			&= \log\left(\frac{p}{1-p}\right) + \sum_{i=1}^{N}x[i]\log\left(\frac{p_i(1|1)}{p_i(1|0)}\right) + -x[i]\log\left(\frac{p_i(0|1)}{p_i(0|0)}\right) + \log\left(\frac{p_i(0|1)}{p_i(0|0)}\right) \\
+			&= \log\left(\frac{p}{1-p}\right) + \sum_{i=1}^{N}x[i]\left(\log\left(\frac{p_i(1|1)}{p_i(1|0)}\right) -\log\left(\frac{p_i(0|1)}{p_i(0|0)}\right)\right) + \log\left(\frac{p_i(0|1)}{p_i(0|0)}\right)\\
+			&= \log\left(\frac{p}{1-p}\right) + \sum_{i=1}^{N}\log\left(\frac{p_i(0|1)}{p_i(0|0)}\right) + \sum_{i=1}^{N}x[i]\left(\log\left(\frac{p_i(1|1)}{p_i(0|1)}\frac{p_i(0|0)}{p_i(1|0)}\right)\right)\\
+		\end{align*}
+		The feature map must include a constant $1$ to account for the term on the left, and must have $N$ more features for each of $x[i]$. Thus, our feature map is simply:
+		\[\phi: x \mapsto (1, x[1], \ldots, x[N])\]
+		Therefore, our vector $w$, such that $r(x) = \langle w, \phi(x)\rangle$, is:
+		\[w = \left(\log\left(\frac{p}{1-p}\right) + \sum_{i=1}^{N}\log\left(\frac{p_i(0|1)}{p_i(0|0)}\right), \log\left(\frac{p_1(1|1)}{p_1(0|1)}\frac{p_1(0|0)}{p_1(1|0)}\right), \ldots, \log\left(\frac{p_N(1|1)}{p_N(0|1)}\frac{p_N(0|0)}{p_N(1|0)}\right)\right)\]
 \end{enumerate}
 \end{document}
