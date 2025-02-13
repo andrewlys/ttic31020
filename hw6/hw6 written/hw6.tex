@@ -293,7 +293,8 @@ Solutions by {\bf Andrew Lys} \qquad Collaborated with {\bf Sam Fine}   %% <-- y
 			&= \sum_{j=1}^{N} \sum_{y \in \{0, 1\}} \sum_{x \in \{0, 1\}} \log(p_{y}[j]^{x}(1-p_{y}[j])^{1-x})n_j(x, y)\\
 			&= \sum_{j=1}^{N} \sum_{y \in \{0, 1\}} \sum_{x \in \{0, 1\}} n_j(x, y) (x\log(p_{y}[j]) + (1-x)\log(1-p_{y}[j]))\\
 		\end{align*}
-		Now we differentiate with respect to $p_{y}[j]$ and set equal to zero.
+		Where $n_j(x,y)$ is the number of $(x_i, y_i)$'s such that $x_i[j]=x$ and $y_i = y$. 
+		We differentiate with respect to $p_{y}[j]$ and set equal to zero.
 		\begin{align*}
 			\frac{d}{dp_{y}[j]}\hat{\theta} &= \sum_{x \in \{0, 1\}} n_j(x, y)\left(\frac{x}{p_{y}[j]} - \frac{1-x}{1-p_{y}[j]}\right) + (\alpha - 1)\frac{1}{p_{y}[j]} \\ 
 			&= n_j(1,y)\frac{1}{p_y[j]} - n_j(0,y)\frac{1}{1-p_y[j]} + (\alpha - 1)\frac{1}{p_{y}[j]} = 0\\
@@ -302,9 +303,28 @@ Solutions by {\bf Andrew Lys} \qquad Collaborated with {\bf Sam Fine}   %% <-- y
 			\implies p_y[j] &= \frac{n_j(1,y) + (\alpha - 1)}{n_j(0, y) + n_j(1, y) + (\alpha - 1)}\\
 			\implies \hat{p}_y[j]&= \frac{n_j(1,y) + (\alpha - 1)}{n(y) + (\alpha - 1)}\\
 		\end{align*}
-
-
-
+	\item
+		Recall that the discriminant is given by 
+		\[r(x) = \log \frac{p}{1-p} + \sum_{i=1}^{N} \log\frac{p_1[i]^{x[i]}(1-p_1[i])^{x[i]}}{p_0[i]^{x[i]}(1-p_0[i]^{1-x[i]})}\]
+		We can simplify this
+		\begin{align*}
+			r(x) &= \log \frac{p}{1-p} + \sum_{i=1}^{N} \sum_{x \in \{0,1\}} [[x[i] = x]]\left(x\log\frac{p_1[i]}{p_0[i]} + (1-x)\log\frac{1-p_1[i]}{1-p_0[i]}\right)\\
+			&= \log \frac{p}{1-p} + \sum_{i=1}^{N} [[x[i] = 1]]\log\frac{p_1[i]}{p_0[i]} + [[x[i] = 0]]\log\frac{1-p_1[i]}{1-p_0[i]}\\
+		\end{align*}
+		Taking a slightly modified feature map from before, i.e. 
+		\[\phi: x\mapsto (x[1], \ldots, x[N])\]
+		We have the following $w \in \rr^N$ and $b$ in $\rr$ such that $r(x) = \langle w, \phi(x)\rangle + b$:
+		\begin{align*}
+			w[i] &= \log \frac{p_1[i]}{p_0[i]} - \log \frac{1-p_1[i]}{1 - p_0[i]}\\
+			b &= \log\frac{p}{1-p} + \sum_{i = 1}^{N} \log \frac{1-p_1[i]}{1 - p_0[i]}\\
+		\end{align*}
+		Now we can easily plug in our MAP estimators. 
+		\begin{align*}
+			w[i] &= \log \frac{n_i(1,1) + (\alpha - 1)}{n(1) + (\alpha - 1)} \frac{n(0) + (\alpha-1)}{n_i(1,0) + (\alpha - 1)} - \log \frac{n_i(0,1)}{n(1) + (\alpha - 1)} \frac{n(0) + (\alpha - 1)}{n_i(0,0)}\\
+			&= \log \frac{n_i(1,1) + (\alpha - 1)}{n_i(1,0) + (\alpha - 1)} - \log \frac{n_i(0,1)}{n_i(0,0)}\\
+			b &= \log\frac{n(1)/n}{n(0)/n} + \sum_{i = 1}^{N} \log \frac{n_i(0,1)}{n(1) + (\alpha - 1)}\frac{n(0) + (\alpha -1)}{n_i(0,0)}\\
+			&= \log\frac{n(1)}{n(0)} + \sum_{i = 1}^{N} \log \frac{n_i(0,1)}{n(1) + (\alpha - 1)}\frac{n(0) + (\alpha -1)}{n_i(0,0)}\\
+		\end{align*}
 \end{enumerate}
 \subsection{Multiple Classes}
 \subsection{Adding Dependencies: A Markov Model}
