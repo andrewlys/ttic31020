@@ -327,5 +327,27 @@ Solutions by {\bf Andrew Lys} \qquad Collaborated with {\bf Sam Fine}   %% <-- y
 		\end{align*}
 \end{enumerate}
 \subsection{Multiple Classes}
+\begin{enumerate}[(a)]
+	\item 
+		Let $p(k) = P(Y = k)$ and $p_i(x|y) = P(X[i] = x|Y = y)$.
+		\begin{align*}
+			P(Y = y|x) &= \frac{P(X = x|Y = y) P(Y = y)}{P(X = x)} = \frac{P(X[1] = x[1], \ldots, X[N] = x[n]| Y = y)p(y)}{P(X=x|Y = 1) P(Y = 1) + \ldots + P(X=x| Y = k)P(Y=k)}\\
+			&= \frac{p(y)\prod_{i=1}^{N}p_i(x[i]|y)}{\sum_{j=1}^{k} p(j)\prod_{i=1}^{N}p_i(x[i]|j)}\\
+		\end{align*}
+	\item
+		We solve the equation:
+		\[\exp(\langle w_y, \phi(x)\rangle) = p(y) \prod_{i=1}^{N}p_i(x[i]|y)\]
+		We take the log of both sides and simplify.
+		\begin{align*}
+			\langle w_y, \phi(x)\rangle &= \log(p(y)) + \sum_{i=1}^{N} \log(p_i(x[i]|y))\\
+			&= \log(p(y)) + \sum_{i=1}^{N} [[x[i] = 1]]\log(p_i(1|y)) + [[x[i] = 0]] \log(p_i(0|y))\\
+		\end{align*}
+		We let the feature map be 
+		\[\phi: x \mapsto (x[1], \ldots, x[N], 1)\]
+		And we let $w_y \in \rr^{N+1}$ be 
+		\[w_y = \left((\log(p_i(1|y)) - \log(p_i(0|y)))_{i=1}^N, \log(p(y)) + \sum_{i=1}^{N} \log(p_i(0|y)) \right)\]
+	\item 
+		For convenice, we write the bias term separate from $w$.
+\end{enumerate}
 \subsection{Adding Dependencies: A Markov Model}
 \end{document}
