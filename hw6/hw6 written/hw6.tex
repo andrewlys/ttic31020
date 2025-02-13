@@ -84,9 +84,8 @@ Solutions by {\bf Andrew Lys} \qquad   %% <-- your name here ***
 		\begin{align*}
 			P(x[1] = x_1, \ldots, x[N] = x_N | y = y) &= \prod_{i=1}^N P(x[i] = x_i | y = y)\\
 		\end{align*}
-		Thus, we can focus on estimators of $p$ and $P(x[i] = x | y = y) := p_i(x|y)$.
-
-		We should expect that our MLEs for $p$ and $p_i(x|y)$ to be the sample means, i.e. 
+		Thus, we can focus on estimators of $p$ and $P(x[i] = x | y = y) := p_i(x|y)$ (I know that this swaps the arguments of $n_i(y, x)$, it's too much to change now).
+		We should expect our MLEs for $p$ and $p_i(x|y)$ to be the sample means, i.e. 
 		\begin{align*}
 		\hat{p} &= \frac{n(1)}{n}\\
 		\hat{p}_i(x|y) &= \frac{n_i(y, x)}{n(y)}
@@ -196,5 +195,23 @@ Solutions by {\bf Andrew Lys} \qquad   %% <-- your name here ***
 		\[\phi: x \mapsto (1, x[1], \ldots, x[N])\]
 		Therefore, our vector $w$, such that $r(x) = \langle w, \phi(x)\rangle$, is:
 		\[w = \left(\log\left(\frac{p}{1-p}\right) + \sum_{i=1}^{N}\log\left(\frac{p_i(0|1)}{p_i(0|0)}\right), \log\left(\frac{p_1(1|1)}{p_1(0|1)}\frac{p_1(0|0)}{p_1(1|0)}\right), \ldots, \log\left(\frac{p_N(1|1)}{p_N(0|1)}\frac{p_N(0|0)}{p_N(1|0)}\right)\right)\]
+	\item 
+		The log odds term in the bias has a simple interpretation. 
+		\begin{align*}
+			\frac{\hat{p}}{1-\hat{p}} &= \frac{n(1)/n}{n(0)/n} = \frac{n(1)}{n(0)}\\
+			\log\left(\frac{\hat{p}}{1-\hat{p}}\right) &= \log\left(\frac{n(1)}{n(0)}\right)\\
+		\end{align*}
+		Similarly, 
+		\begin{align*}
+			\frac{\hat{p}_i(x|y)}{\hat{p}_i(x'|y')} &= \frac{n_i(y, x)/n(y)}{n_i(y',x')/n(y')}\\
+		\end{align*}
+		So, 
+		\begin{align*}
+			\frac{\hat{p}_i(0|1)}{\hat{p}_i(0|0)} &= \frac{n_i(1, 0)}{n_i(0, 0)}\frac{n(0)}{n(1)}\\
+			\frac{\hat{p}_i(1|1)\hat{p}_i(0|0)}{\hat{p}_i(0|1)\hat{p}_i(1|0)} &= \frac{n_i(1, 1)/n(1) n_i(0, 0)/n(0)}{n_i(1, 0)/n(1) n_i(0, 1)/n(0)}\\
+			&= \frac{n_i(1,1)n_i(0,0)}{n_i(1,0)n_i(0,1)}\\
+		\end{align*}
+		So we have the following simplification for $w$:
+		\[w = \left((N-1)\log\frac{n(0)}{n(1)} + \sum_{i = 1}^{N} \log \frac{n_i(1, 0)}{n_i(0,0)}, \log \frac{n_1(1,1)n_1(0,0)}{n_1(1,0)n_1(0,1)}, \ldots, \log \frac{n_N(1,1)n_N(0,0)}{n_N(1,0)n_N(0,1)}\right)\]
 \end{enumerate}
 \end{document}
