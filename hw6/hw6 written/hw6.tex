@@ -10,6 +10,7 @@
 \usepackage[margin=1in]{geometry}
 \newgeometry{left=1.5cm, right=1.5cm, top = 1.5cm}
 \fancyhfoffset[E,O]{0pt}
+\setlength{\headheight}{12.0pt}
 \allowdisplaybreaks\rhead{Andrew Lys}%% <-- your name here
 \chead{Problem Set 6}
 \cfoot{\thepage}
@@ -188,6 +189,37 @@ Solutions by {\bf Andrew Lys} \qquad Collaborated with {\bf Sam Fine}   %% <-- y
 			\frac{|\Sigma_-|}{|\Sigma_+} &= \prod_{i=1}^{d}\frac{s_-[i]}{s_+[i]} \implies \frac{1}{2} \log \frac{|\Sigma_-|}{|\Sigma_+|} = \frac12\sum_{i=1}^{d} s_-[i] - s_+[i]\\
 			\mu_+^\intercal\Sigma_{+}^{-1}\mu_+ &= \sum_{i=1}^{d}\frac{\mu_+[i]^2}{s_+[i]}\qquad\qquad \mu_-^\intercal\Sigma_{-}^{-1}\mu_- = \sum_{i=1}^{d}\frac{\mu_-[i]^2}{s_-[i]}\\
 			b &= \log\left(\frac{p_+}{1-p_+}\right) + \frac12\sum_{i=1}^{d} s_-[i] - s_+[i]+ \frac{\mu_+[i]^2}{s_+[i]} - \frac{\mu_-[i]^2}{s_-[i]}\\
+		\end{align*}
+		Let us make the simplifying assumption that $s_-[i]=1$ when $a_i <0$ and $s_+[i] = 1$ when $a_i > 0$. Suppose $a_i < 0$. Then we have:
+		\begin{align*}
+			a_i &= \frac{1}{2} - \frac12 s_+[i]^{-1}\\
+			\implies s_+[i] &= \frac{1}{1-2a_i} > 0\\
+		\end{align*}
+		Let us make the simplifying assumption that $\mu_+[i] = 0$ when $a_i <0$ and $\mu_-[i] = 0$ when $a_i > 0$. Suppose $a_i < 0$. Then we have:
+		\begin{align*}
+			v_i &= -\frac{\mu_{-}[i]}{s_+[i]} = -\frac{\mu_{-}[i]}{1-2a_i}\\
+			\implies \mu_{-}[i] &= -v_i(1-2a_i)\\
+		\end{align*}
+		When $a_i > 0$, then $s_+[i] = 1$ and $\mu_+[i] = 0$. Thus, we have:
+		\begin{align*}
+			a_i &= \frac{1}{2}(s_-[i]^{-1} - 1)\\
+			\implies s_-[i] &= \frac{1}{1+2a_i}\\
+			v_i &= \frac{\mu_{+}[i]}{s_+[i]} = (1 + 2a_i)\mu_{+}[i]\\
+			\mu_{+}[i] &= \frac{v_i}{1+2a_i}\\
+		\end{align*}
+		To summarize:
+		\begin{align*}
+			\mu_+[i] &= [[a_i > 0]]\frac{v_i}{1 + 2a_i}\\
+			\mu_-[i] &= [[a_i < 0]](-v_i(1 - 2a_i))\\
+			s_+[i]&= (1-2a_i)^{-[[a_i < 0]]}\\
+			s_-[i]&= (1+2a_i)^{-[[a_i > 0]]}\\
+		\end{align*}
+		Now we can solve for $p_+$. 
+		\begin{align*}
+			&\log\frac{p_+}{1-p_+} + \frac{1}{2}\sum_{i=1}^{d}\frac{1}{(1+2a_i)}^{[[a_i > 0]]} - \frac{1}{(1-2a_i)}^{-[[a_i < 0]]} + [[a_i > 0]]\frac{v_i^2(1-2a_i)^{[[a_i < 0]]}}{(1+2a_i)^{2}} - [[a_i < 0]]v_i^2 (1-2a_i)^2(1+2a_i)^{[[a_i > 0]]}\\
+			b&= \log\frac{p_+}{1-p_+} + \frac12 \sum_{i=1}^{d} (1 + 2a_i)^{-[[a_i > 0]]} - (1 - 2a_i)^{-[[a_i < 0]]} +[[a_i > 0]]\frac{v_i^2}{(1+2a_i)^2} - [[a_i < 0]]v_i^2(1-2a_i)^2\\
+			\frac{p_+}{1-p_+} &= \exp\left(b - \frac12 \left(\sum_{i=1}^{d} (1 + 2a_i)^{-[[a_i > 0]]} - (1 - 2a_i)^{-[[a_i < 0]]} +[[a_i > 0]]\frac{v_i^2}{(1+2a_i)^2} - [[a_i < 0]]v_i^2(1-2a_i)^2\right)\right)\\
+			p_+ &= \frac{1}{1 + \exp\left(-b + \frac12 \left(\sum_{i=1}^{d} (1 + 2a_i)^{-[[a_i > 0]]} - (1 - 2a_i)^{-[[a_i < 0]]} +[[a_i > 0]]\frac{v_i^2}{(1+2a_i)^2} - [[a_i < 0]]v_i^2(1-2a_i)^2\right)\right)}\\
 		\end{align*}
 \end{enumerate}
 \begin{center}
@@ -465,7 +497,7 @@ Solutions by {\bf Andrew Lys} \qquad Collaborated with {\bf Sam Fine}   %% <-- y
 		We take the log of both sides and simplify.
 		\begin{align*}
 			\langle w_y, \phi(x)\rangle &= \log(p(y)) + \sum_{i=1}^{N} \log(p_i(x[i]|y))\\
-			&= \log(p(y)) + \sum_{i=1}^{N} [[x[i] = 1]]\log(p_i(1|y)) + [[x[i] = 0]] \l(p0i(0|y))\\
+			&= \log(p(y)) + \sum_{i=1}^{N} [[x[i] = 1]]\log(p_i(1|y)) + [[x[i] = 0]] \log(p_i(0|y))\\
 		\end{align*}
 		We let the feature map be 
 		\[\phi: x \mapsto (x[1], \ldots, x[N], 1)\]
