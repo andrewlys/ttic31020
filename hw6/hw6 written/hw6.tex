@@ -386,6 +386,21 @@ Solutions by {\bf Andrew Lys} \qquad Collaborated with {\bf Sam Fine}   %% <-- y
 			&= \log \frac{n_j(1,y) + (\alpha - 1)}{n_j(0,y) + (\alpha - 1)}\\
 			b &= \log(p(y)) + \sum_{j=1}^{N} \log(1-p_y[j]) = \log\frac{n(y)}{n} + \sum_{j=1}^{N} \log\frac{n_j(0,y) + (\alpha - 1)}{n(y) + (\alpha - 1)}\\
 		\end{align*}
+	\item 
+		We write $-\log P(\{y_i\}|\{x_i\}, \{w_y\}) = -\log P(Y|X, W)$. Recall the posterior:
+		\[P(Y = y| x) = \frac{\exp(r_y(x))}{\sum_{l=1}^{k}\exp(r_l(x))}= \frac{\exp(\langle w_y, \phi(x)\rangle)}{\sum_{l=1}^{k} \exp(\langle w_l, \phi(x) \rangle)}\]
+		Noting that $(x_i, y_i)$ are i.i.d., we have:
+		\begin{align*}
+			P(Y|X, w) &= \prod_{i=1}^{n} P(Y_i = y_i|X_i = x_i, w) = \prod_{i=1}^{n} \frac{\exp(\langle w_{y_i}, \phi(x_i)\rangle)}{\sum_{l=1}^{k} \exp(\langle w_l, \phi(x_i) \rangle)}\\
+			-\log P(Y|X, w) &= \sum_{i=1}^{n} \log \sum_{l=1}^{k} \exp(\langle w_l, \phi(x_i)\rangle) - \sum_{i=1}^{n} \langle w_{y_i}, \phi(x_i)\rangle\\
+		\end{align*}
+	\item 
+		\begin{align*}
+			-\log P(Y|X, w) &= \sum_{i=1}^{n} \left(\log\left(\sum_{l=1}^{k} \exp(\langle w_l, \phi(x_i)\rangle)\right) - \langle w_{y_i}, \phi(x_i)\rangle \right)\\
+			\ell(y_i; r_1(x), \ldots, r_k(x))&= \log\left(\sum_{l=1}^{k} \exp(r_l(x))\right) - \log(\exp(r_{y_i}(x)))\\
+			&= \log\left(\frac{\exp(r_{y_i}(x))}{\sum_{l=1}^{k} \exp(r_l(x))}\right) = \log\left(\sum_{l=1}^{k} \exp(r_l(x) - r_{y_i}(x))\right)\\
+			&= \log\left(\sum_{l=1}^{k} \exp(\langle w_l - w_{y_i}, \phi(x)\rangle)\right)
+		\end{align*}
 \end{enumerate}
 \subsection{Adding Dependencies: A Markov Model}
 \end{document}
