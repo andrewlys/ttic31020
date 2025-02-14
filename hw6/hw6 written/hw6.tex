@@ -347,7 +347,45 @@ Solutions by {\bf Andrew Lys} \qquad Collaborated with {\bf Sam Fine}   %% <-- y
 		And we let $w_y \in \rr^{N+1}$ be 
 		\[w_y = \left((\log(p_i(1|y)) - \log(p_i(0|y)))_{i=1}^N, \log(p(y)) + \sum_{i=1}^{N} \log(p_i(0|y)) \right)\]
 	\item 
-		For convenice, we write the bias term separate from $w$.
+		For convenience, we write the bias term separate from $w$. 
+		The process for computing the MAP estimators for the parameters is almost entirely the same as before.
+		Our objective function, for a sample $S = X \times Y$ is as follows:
+		\begin{align*}
+			p(X|Y, \{p_y\})p(Y|p)p(p, \{p_y\}) &= \prod_{i=1}^{n} p(X = x_i|Y = y_i, \{p_y\})p(Y = y_i|p)p(p) p(\{p_y\})\\
+			&= \prod_{i=1}^{n} \prod_{j=1}^{N}\prod_{l=1}^k p(X[j] = x_i[j]|Y_i = y_i, \{p_y\})p(Y = y_i|p)\frac{1}{Z(1)}p_l^{1 - 1} \frac{1}{Z(\alpha)^k}p_l[j]^{\alpha - 1}\\
+			&= \frac{1}{Z(\alpha)^k}\prod_{i=1}^{n} \prod_{j=1}^{N}\prod_{l=1}^k p_j(x_i[j]|y_i)p(y_i)p_l[j]^{\alpha - 1}\\
+		\end{align*}
+		Again, we can disregard the constant, and take $\log$, to get the following:
+		\begin{align*}
+			&\sum_{i=1}^{n}\sum_{j=1}^{N}\log p_j(x_i[j]|y_i) + \sum_{i=1}^{n} \log(p(y_i)) + \sum_{l=1}^{k}\sum_{j=1}^{N}(\alpha - 1)\log(p_l[j])\\
+			&= \sum_{j=1}^N \sum_{l=1}^k \sum_{x \in \{0,1\}} \sum_{i=1}^n [[x_i[j] = x \land y_i = l]] \log(p_j(x|l))\\
+			&+ \sum_{l=1}^{k}\sum_{i=1}^{n}[[y_i = l]] \log(p(l)) + \sum_{l=1}^{k}\sum_{j=1}^{N}(\alpha - 1)\log(p_l[j])\\
+			&= \sum_{j=1}^N \sum_{l=1}^k \sum_{x \in \{0,1\}} n_j(x, l) \log(p_j(x|l)) + \sum_{l=1}^{k}n(l) \log(p(l)) + \sum_{l=1}^{k}\sum_{j=1}^{N}(\alpha - 1)\log(p_l[j])\\
+			&= \sum_{j=1}^{N}\sum_{l=1}^{k} n_j(1, l) \log(p_l[j]) + n_j(0, l)\log(1 - p_l[j]) + \sum_{l=1}^{k}n(l) \log(p(l)) + \sum_{l=1}^{k}\sum_{j=1}^{N}(\alpha - 1)\log(p_l[j])\\
+		\end{align*}
+		Since we no longer have two $p(l)$'s, we need to apply Lagrange multipliers, with the constraint:
+		\[\sum_{l=1}^k p(l) = 1\] 
+		We can write the Lagrangian, together with the first order conditions, as follows:
+		\begin{align*}
+			\mathcal{L} &= \sum_{l=1}^{k}n(l) \log(p(l)) - \lambda(\sum_{l=1}^{k} p(l) - 1)\\
+			[p(l)] &: \frac{n(l)}{p(l)} = \lambda\\
+			[\lambda] &: \sum_{l=1}^{k} p(l) = 1\\
+			\implies 1 &= p(l) + \sum_{m\neq l} \frac{n(m)}{n(l)} p(l)\\
+			\implies n(l)&= p(l)\sum_{l=1}^{k}n(l) = p(l)n\\
+			\implies \hat{p}(l) &= \frac{n(l)}{n}\\
+		\end{align*}
+		We can now differentiate with respect to $p_l[j]$ and set equal to zero.
+		\begin{align*}
+			0 &= \frac{n_j(1,l)}{p_l[j]} - \frac{n_j(0,l)}{1 - p_l[j]} + \frac{\alpha - 1}{p_l[j]}\\
+			\frac{p_l[j]}{1 - p_l[j]} &= \frac{n_j(1,l) + (\alpha - 1)}{n_j(0,l)}\\
+			\hat{p}_l[j] &= \frac{n_j(1,l) + (\alpha - 1)}{n_j(0,l) + n_j(1,l) + (\alpha - 1)} = \frac{n_j(1,l) + (\alpha - 1)}{n(l) + (\alpha - 1)}\\
+		\end{align*}
+		Plugging $\hat{p}(l)$ and $\hat{p}_l[j]$ into $w_y$, we have:
+		\begin{align*}
+			w_y[j] &= \log p_y[j] - \log(1- p_y[j]) = \log \frac{n_j(1,y) + (\alpha - 1)}{n(y) + (\alpha - 1)} - \log \frac{n(0, l) + (\alpha - 1)}{n(l) + (\alpha - 1)}\\
+			&= \log \frac{n_j(1,y) + (\alpha - 1)}{n_j(0,y) + (\alpha - 1)}\\
+			b &= \log(p(y)) + \sum_{j=1}^{N} \log(1-p_y[j]) = \log\frac{n(y)}{n} + \sum_{j=1}^{N} \log\frac{n_j(0,y) + (\alpha - 1)}{n(y) + (\alpha - 1)}\\
+		\end{align*}
 \end{enumerate}
 \subsection{Adding Dependencies: A Markov Model}
 \end{document}
