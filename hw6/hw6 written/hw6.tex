@@ -221,6 +221,18 @@ Solutions by {\bf Andrew Lys} \qquad Collaborated with {\bf Sam Fine}   %% <-- y
 			\frac{p_+}{1-p_+} &= \exp\left(b - \frac12 \left(\sum_{i=1}^{d} (1 + 2a_i)^{-[[a_i > 0]]} - (1 - 2a_i)^{-[[a_i < 0]]} +[[a_i > 0]]\frac{v_i^2}{(1+2a_i)^2} - [[a_i < 0]]v_i^2(1-2a_i)^2\right)\right)\\
 			p_+ &= \frac{1}{1 + \exp\left(-b + \frac12 \left(\sum_{i=1}^{d} (1 + 2a_i)^{-[[a_i > 0]]} - (1 - 2a_i)^{-[[a_i < 0]]} +[[a_i > 0]]\frac{v_i^2}{(1+2a_i)^2} - [[a_i < 0]]v_i^2(1-2a_i)^2\right)\right)}\\
 		\end{align*}
+	\item
+		The decision boundary is a hyperplane in the feature space given by 
+		\[x \mapsto (x_1, \ldots, x_d, x_1^2, \ldots, x_d^2)\]
+		We can write the discriminant as:
+		\begin{align*}
+			r(x) &= b + \sum_{i=1}^{d}a_ix_i^2 + \sum_{i=1}^{d}v_ix_i\\
+			&= b - \sum \frac{v_i^2}{4a_i} + \sum_{i=1}^{d}a_i\left(x_i + \frac{v_i}{2a_i}\right)^2\\
+		\end{align*}
+		So the decision boundary is determined by an ellipsoid, i.e. 
+		\begin{align*}
+			r(x) &= 0 \implies \sum_{i=1}^{d}a_i\left(x_i + \frac{v_i}{2a_i}\right)^2 = \sum_{i =1 }^{d} \frac{v_i^2}{4a_i} - b\\
+		\end{align*}
 \end{enumerate}
 \begin{center}
 \LARGE Modeling Text Documents
