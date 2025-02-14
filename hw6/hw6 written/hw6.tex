@@ -145,7 +145,28 @@ Solutions by {\bf Andrew Lys} \qquad Collaborated with {\bf Sam Fine}   %% <-- y
 		\end{align*}
 		The Bayes predictor is simply
 		\[h(x) = \sign(r(x))\]
+		Since, when $r(x) > 0$, we have $P(Y = 1|x) > \frac{1}{2}$, and when $r(x) < 0$, we have $P(Y = 1|x) < \frac{1}{2}$.
 	\item {\bf As a Linear Predictor}
+		Letting 
+		\begin{align*}
+			b &= \log\left(\frac{p_+}{1-p_+}\right) + \frac12 \log\left(\frac{|\Sigma_-|}{|\Sigma_+|}\right) + \frac{1}{2}(\mu_+^\intercal\Sigma_{+}^{-1}\mu_+ - \mu_-^\intercal\Sigma_{-}^{-1}\mu_-)\\
+			\diag(a_1, \ldots, a_d) &= \frac{1}{2}(\Sigma_{-}^{-1} - \Sigma_{+}^{-1})\\
+			v &= \Sigma_{+}^{-1}\mu_+ - \Sigma_{-}^{-1}\mu_-\\
+		\end{align*}
+		We can write our discriminant as
+		\[r(x) = b + x^\intercal A x + x^\intercal v\]
+		Let $v = (v_1, \ldots, v_d)^\intercal$. Then we can write
+		\begin{align*}
+			r(x) &= b + \sum_{i=1}^{d}a_ix_i^2 + \sum_{i=1}^{d}v_ix_i\\
+		\end{align*}
+		Thus, it is clear that with the feature map:
+		\[\phi: x \mapsto (1, x_1, \ldots, x_d, x_1^2, \ldots, x_d^2)^\intercal\]
+		$r$ is a linear predictor. Namely:
+		\begin{align*}
+			r(x) &= \langle w, \phi(x)\rangle\\
+			w &= (b, v_1, \ldots, v_d, a_1, \ldots, a_d)^\intercal\\
+		\end{align*}
+		This shows that $D = 2d+1$ is good enough.
 \end{enumerate}
 \begin{center}
 \LARGE Modeling Text Documents
