@@ -167,6 +167,28 @@ Solutions by {\bf Andrew Lys} \qquad Collaborated with {\bf Sam Fine}   %% <-- y
 			w &= (b, v_1, \ldots, v_d, a_1, \ldots, a_d)^\intercal\\
 		\end{align*}
 		This shows that $D = 2d+1$ is good enough.
+	\item
+		Given
+		\[w = (b, v_1, \ldots, v_d, a_1, \ldots, a_d)^\intercal\]
+		Note that we have $4d+1$ parameters in our model. First, let us write $b, A$ and $v$ in terms of $\mu_+$, $\mu_-$, $\Sigma_+$ and $\Sigma_-$. 
+		Let
+		\begin{align*}
+			\mu_y &= (\mu_y[1], \ldots, \mu_y[d])^\intercal\\
+			\Sigma_y &= \diag(s_y[1], \ldots, s_y[d])^\intercal
+		\end{align*}
+		Then we have:
+		\begin{align*}
+			v &= \diag(s_+[1]^{-1}, \ldots, s_+[d]^{-1})\mu_+ - \diag(s_-[1]^{-1}, \ldots, s_-[d]^{-1})\mu_-\\
+			&= \sum_{i=1}^{d}\frac{\mu_+[i]}{s_+[i]}e_i- \sum_{i=1}^{d}\frac{\mu_-[i]}{s_-[i]}e_i\\
+			\implies v_i &= \frac{\mu_+[i]}{s_+[i]} - \frac{\mu_-[i]}{s_-[i]}\\
+			\diag(a_1, \ldots, a_d) &= \frac{1}{2}(\diag(s_-[1]^{-1}, \ldots, s_-[d]^{-1}) - \diag(s_+[1]^{-1}, \ldots, s_+[d]^{-1}))\\
+			&= \diag\left(\frac12\left(s_-[1]^{-1} - s_+[1]^{-1}\right), \ldots, \frac12\left(s_-[d]^{-1} - s_+[d]^{-1}\right)\right)\\
+			\implies a_i &= \frac12\left(s_-[i]^{-1} - s_+[i]^{-1}\right)\\
+			b &= \log\left(\frac{p_+}{1-p_+}\right) + \frac12 \log\left(\frac{|\Sigma_-|}{|\Sigma_+|}\right) + \frac{1}{2}(\mu_+^\intercal\Sigma_{+}^{-1}\mu_+ - \mu_-^\intercal\Sigma_{-}^{-1}\mu_-)\\
+			\frac{|\Sigma_-|}{|\Sigma_+} &= \prod_{i=1}^{d}\frac{s_-[i]}{s_+[i]} \implies \frac{1}{2} \log \frac{|\Sigma_-|}{|\Sigma_+|} = \frac12\sum_{i=1}^{d} s_-[i] - s_+[i]\\
+			\mu_+^\intercal\Sigma_{+}^{-1}\mu_+ &= \sum_{i=1}^{d}\frac{\mu_+[i]^2}{s_+[i]}\qquad\qquad \mu_-^\intercal\Sigma_{-}^{-1}\mu_- = \sum_{i=1}^{d}\frac{\mu_-[i]^2}{s_-[i]}\\
+			b &= \log\left(\frac{p_+}{1-p_+}\right) + \frac12\sum_{i=1}^{d} s_-[i] - s_+[i]+ \frac{\mu_+[i]^2}{s_+[i]} - \frac{\mu_-[i]^2}{s_-[i]}\\
+		\end{align*}
 \end{enumerate}
 \begin{center}
 \LARGE Modeling Text Documents
