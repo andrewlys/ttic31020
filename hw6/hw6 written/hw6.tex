@@ -43,6 +43,7 @@
 \DeclareMathOperator{\Sym}{Sym}
 \DeclareMathOperator{\Cov}{Cov}
 \DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\sign}{sign}
 \newtheorem{theorem}{Theorem}
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}
@@ -131,9 +132,20 @@ Solutions by {\bf Andrew Lys} \qquad Collaborated with {\bf Sam Fine}   %% <-- y
 			\hat{\Sigma}_+ &= \frac{\sum_{i=1}^{m} [[y_i = 1]](x_i - \mu_+) (x_i-\mu_+)^\intercal}{\sum_{i=1}^{m}[[y_i = 1]]}\\
 			\hat{\Sigma}_- &= \frac{\sum_{i=1}^{m}[[y_i = -1]] (x_i - \mu_-) (x_i-\mu_-)^\intercal}{\sum_{i=1}^{m}[[y_i = -1]]}\\
 		\end{align*}
-	\item 
-		{\bf Prediction}
-		
+	\item {\bf Prediction}
+		\begin{align*}
+			P(Y = 1|x) &= \frac{P(X = x| Y= 1)P(Y=1)}{P(X = x)} = \frac{P(X = x|Y=1)p_+}{P(X=x|Y = 1)P(Y=1) + P(X = x|Y = 0)P(Y = 0)}\\
+			&= \frac{1}{1 + \frac{P(X = x| Y = 0)P(Y = 0)}{P(X=x|Y=1)P(Y = 1)}} = \frac{1}{1 + \frac{1-p_+}{p_+}\frac{f(x|\mu_-, \Sigma_-)}{f(x|\mu_+, \Sigma_+)}}\\
+		\end{align*}
+		We obtain the following discriminant:
+		\begin{align*}
+			r(x) &= \log\left(\frac{p_+}{1-p_+}\right) + \log\left(\frac{f(x|\mu_+, \Sigma_+)}{f(x|\mu_-, \Sigma_-)}\right) \\
+			&= \log\left(\frac{p_+}{1-p_+}\right) + \log\left(\frac{\sqrt{|\Sigma_-|}}{\sqrt{|\Sigma_+|}} \right) -\frac{1}{2}(x - \mu_+)^\intercal \Sigma_+^{-1}(x - \mu_+) + \frac12(x - \mu_-)^\intercal \Sigma_-^{-1}(x - \mu_-) \\ 
+			&= \log\left(\frac{p_+}{1-p_+}\right) + \frac12 \log\left(\frac{|\Sigma_-|}{|\Sigma_+|}\right) + \frac{1}{2}(\mu_+^\intercal\Sigma_{+}^{-1}\mu_+ - \mu_-^\intercal\Sigma_{-}^{-1}\mu_-)+ \frac{1}{2}x^\intercal(\Sigma_{-}^{-1} - \Sigma_{+}^{-1})x + x^\intercal(\Sigma_+^{-1}\mu_+-\Sigma_-^{-1}\mu_-)\\
+		\end{align*}
+		The Bayes predictor is simply
+		\[h(x) = \sign(r(x))\]
+	\item {\bf As a Linear Predictor}
 \end{enumerate}
 \begin{center}
 \LARGE Modeling Text Documents
