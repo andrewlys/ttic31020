@@ -240,100 +240,88 @@ Solutions by {\bf Andrew Lys} \qquad Collaborated with {\bf Sam Fine}   %% <-- y
 \subsection{A Simple Model}
 \begin{enumerate}[(a)]
   	\item 
-		We shall denote $p_{\mathrm{topic}}$ as $p$, since it is given that this is a single probability. 
-		For simplicity, we assume that $y \in \{0, 1\}$, and that $x \in \{0, 1\}^N$.
-		We denote $x[i]$ to be the $i$th coordinate of the sample $x$. 
+		Let $Y$ be the random variable with the topics as outputs, and the distribution given by $p_{\mathrm{topic}}$. 
+		We shall denote $p_{\mathrm{topic}}$ as $p$, a two dimensional vector, where $p(y) = P(Y = y)$
+		
+		Let $X$ be the random variable with the documents as outputs.
+		$X$ is a $N$-dimensional vector, where $X[i]$ is the $i$th word in the document.
+		By the conditional independence assumption, we have 
+		\[P(X[i] = x, X[j] = x'|Y = y) = P(X[i] = x|Y=y)P(X[j] = x'|Y = y)\]
+		Further, we assume that $X[i]$ is drawn identically from $p_y$, so for every $i$, we let 
+		\[p(x|y) := P(X[i] = x| Y= y)\]
+		Let $p_y := p(\cdot | y) \in \rr^D$. For simplicity, we assume that $Y \in \{0,1\}$ and $X[i] \in [D]$, for every $i$. 
+		We denote the indicator function to be $[[\ast]]$
 
-		Given a sample 
+		Given a sample
 		\[
 		S = \{(x_1,y_1), \ldots, (x_n, y_n)\}
 		\]
-		We define the following sample statistics. For $x \in \{0,1\}$, $y \in \{0,1\}$:
-		\[n_j(y, x) = |\{i : (x_i, y_i)\in S, x_i[j] = x, y_i = y\}|\]
+		We define the following sample statistics. For $x \in [D]$, $y \in \{0,1\}$
+		\[n_j(x, y) = |\{i : (x_i, y_i)\in S, x_i[j] = x, y_i = y\}|\]
+		\[n(x,y) = \sum_{j = 1}^{N} n_j(x,y)\]
 		\[n(y) = |\{i : (x_i, y_i)\in S, y_i = y\}|\]
 
 		We want to find estimators for $p$ and for  
-		\[P(x[1] = x_1, \ldots, x[N] = x_N | y = y)\]
+		\[P(X[1] = x_1, \ldots, X[N] = x_N | Y = y)\]
 
-		By the independence of $x[i] | y$, we can simplify this expression:
+		Since $X[i] | y$ is i.i.d., we can simplify this expression:
 		\begin{align*}
-			P(x[1] = x_1, \ldots, x[N] = x_N | y = y) &= \prod_{i=1}^N P(x[i] = x_i | y = y)\\
+			P(X[1] = x_1, \ldots, X[N] = x_N | Y = y) &= \prod_{i=1}^N P(X[i] = x_i | Y = y) = \prod_{i = 1}^{N}p(x_i|y)\\
 		\end{align*}
-		Thus, we can focus on estimators of $p$ and $P(x[i] = x | y = y) := p_i(x|y)$ (I know that this swaps the arguments of $n_i(y, x)$, it's too much to change now).
-		We should expect our MLEs for $p$ and $p_i(x|y)$ to be the sample means, i.e. 
+		Thus, we can focus on estimators of $p$ and $p(x|y)$.
+		We should expect our MLEs for $p$ and $p(x|y)$ to be the sample means, i.e. 
 		\begin{align*}
 		\hat{p} &= \frac{n(1)}{n}\\
-		\hat{p}_i(x|y) &= \frac{n_i(y, x)}{n(y)}
+		\hat{p}(x|y) &= \frac{n(x,y)}{n(y)}
 		\end{align*}
 		
-		We define our log-likelihood function as
-		\[\ell(\theta|S) = \sum_{i=1}^{n}\log(P(y = y_i, x[1] = x_i[1], \ldots, x[N] = x_i[N] )) \]
-		Given that $S$ was drawn i.i.d., we can simplify.
+		Let $\theta = (p, \{p_y\})$. We define our likelihood function as:
+		\[L(\theta, S) = P((X = x_1, Y = y_1), \ldots, (X = x_n, Y = y_n) | \theta)\]
+		Since $S$ was drawn i.i.d., we can simplify:
 		\begin{align*}
-			\ell(\theta|S) &= \sum_{i=1}^{n}\log(P(x[1] = x_i[1], \ldots, x[N] = x_i[N] | y = y_i)P(y = y_i))  \\
-			&= \sum_{i=1}^{n}\log(P(y=y_i)\prod_{j=1}^{N} P(x[j] = x_i[j]|y = y_i))\\
-			&= \sum_{i=1}^{n}\log(P(y = y_i)) + \sum_{j=1}^{N} \log(P(x[j] = x_i[j]|y = y_i))\\
-			&= \sum_{i=1}^{n}\log(P(y = y_i)) + \sum_{i=1}^{n}\sum_{j=1}^{N} \log(p_j(x_i[j]|y_i))\\
+			L(\theta, S) &= \prod_{i=1}^{n} P(X = x_i, Y = y_i| \theta) 
 		\end{align*}
-		Writing the parameters explicitly, we have:
-		\[
-		\ell(\theta|S) = \sum_{i=1}^{n}\log(P(y = y_i|p)) + \sum_{i=1}^{n}\sum_{j=1}^{N} \log(P(x[i] = x_j[i]| y_i, p_i(x|y)))
-		\]
-		To solve for the minmimum of $\ell(\theta|S)$, we use the method of Lagrange multipliers. 
-		First, we can split the problem into two steps. It's clear that that right sum does not depend on $p$, 
-		so we can begin by finding the optimal $p$.
-
-		We note:
+		By the monotonicity of $\log$, we can optimize over the log-likelihood, $\ell$.
+		Given that $X[i] | Y$ is i.i.d., we can simplify.
 		\begin{align*}
-			P(y = y_i|p) &= P(y = y_i| y_i = 1, p)P(y_i = 1| p) + P(y = y_i| y_i = 0, p)P(y_i = 0| p)\\
-			&= P(y = 1 |p)[[y_i = 1]] + P(y = 0 | p)[[y_i = 0]]\\
-			&= p^{y_i}(1-p)^{1-y_i}
+			\ell(\theta|S) &= \sum_{i=1}^{n}\log(P(X[1] = x_i[1], \ldots, X[N] = x_i[N] | Y = y_i)P(Y = y_i))\\
+			&= \sum_{i=1}^{n}\log(P(Y=y_i)\prod_{j=1}^{N} P(X[j] = x_i[j]|Y = y_i))\\
+			&= \sum_{i=1}^{n}\log P(Y = y_i) + \sum_{j=1}^{N} \log P(X[j] = x_i[j]|Y = y_i)\\
+			&= \sum_{i=1}^{n}\log p(y_i) + \sum_{i=1}^{n}\sum_{j=1}^{N} \log p(x_i[j]|y_i)\\
+			&= \sum_{i=1}^{n} \sum_{y \in \{0, 1\}}[[y_i = y]] \log p(y) + \sum_{i=1}^{n}\sum_{j=1}^{N} \sum_{x \in [D]} [[x_i[j] = x]]\log p(x|y_i)\\
+			&= \sum_{i=1}^{n} \sum_{y \in \{0, 1\}}[[y_i = y]] \log p(y) + \sum_{i=1}^{n}\sum_{j=1}^{N} \sum_{x \in [D]}\sum_{y \in \{0, 1\}} [[x_i[j] = x \land y_i = y]]\log p(x|y)\\
+			&= \sum_{y \in \{0, 1\}} n(y) \log p(y) + \sum_{x \in [D]}\sum_{y \in \{0, 1\}} \sum_{j = 1}^{N} n_j(x,y)\log p(x|y)\\
+			&= \sum_{y \in \{0, 1\}} n(y) \log p(y) + \sum_{x \in [D]}\sum_{y \in \{0, 1\}} n(x,y)\log p(x|y)\\
 		\end{align*}
-		Plugging this into our log-likelihood, we have:
+		To solve for the minmimum of $\ell(\theta|S)$, we use the method of Lagrange multipliers.
+		We have the following constraints:
+		\[\sum_{y \in \{0, 1\}} p(y) = 1\]
+		\[\sum_{x \in [D]} p(x|y) = 1 \qquad \forall y \in \{0, 1\}\]
+		Then we have the following Lagrangian:
+		\[\mathcal{L} = \sum_{y \in \{0, 1\}} n(y) \log p(y) + \sum_{x \in [D]}\sum_{y \in \{0, 1\}} n(x,y)\log p(x|y) - \mu \left(\sum_{y \in \{0, 1\}} p(y)- 1\right)  -  \sum_{y \in \{0, 1\}} \lambda_y\left(\sum_{x \in [D]} p(x|y) - 1\right) \]
+		Taking critical points:
 		\begin{align*}
-			\ell(\theta|S) &= \sum_{i=1}^{n}\log(p^{y_i}(1-p)^{1-y_i}) + \sum_{i=1}^{n}\sum_{j=1}^{N} \log(P(x[i] = x_j[i]| y_i, p_i(x|y)))\\
-			&= \sum_{i=1}^{n}y_i\log(p) + (1-y_i)\log(1-p) + \sum_{i=1}^{n}\sum_{j=1}^{N} \log(P(x[i] = x_j[i]| y_i, p_i(x|y)))\\
+			[p(y)] &: \frac{n(y)}{p(y)} = \mu\\
+			[p(x|y)] &: \frac{n(x,y)}{p(x|y)} = \lambda_y\\
+			[\mu] &: \sum_{y \in \{0, 1\}} p(y) = 1\\
+			[\lambda_y] &: \sum_{x \in [D]} p(x|y) = 1\\
 		\end{align*}
-		Taking the derivative with respect to $p$ and setting it to zero, we have:
+		We solve for $p(y)$:
 		\begin{align*}
-			\frac{d}{dp}\ell(\theta|S) &= \sum_{i=1}^{n}\frac{y_i}{p} - \frac{1-y_i}{1-p} = 0\\
-			\sum_{i=1}^{n}\frac{y_i}{p} &= \sum_{i=1}^{n}\frac{1-y_i}{1-p}\\
-			\frac{1-p}{p} &= \frac{\sum_{i = 1}^{n} 1- y_i}{\sum_{i = 1}^{n} y_i}\\
-			p &= \frac{\sum_{i = 1}^{n} y_i}{n}
+			\frac{n(1)}{p(1)} &= \frac{n(0)}{p(0)}\\
+			p(0)&= p(1)\frac{n(0)}{n(1)}\\
+			1 &= p(0) + p(0) \frac{n(0)}{n(1)}\\
+			n(1) &= p(1)n(1) + p(1)n(0)\\
+			p(1) &= \frac{n(1)}{n}\\
+			p(0) &= \frac{n(0)}{n}\\
 		\end{align*}
-		Thus, we have that $\hat{p} = \frac{n(1)}{n}$.
-
-		Now, we solve for $\hat{p}_i(x|y)$, by using the method of Lagrange multipliers.
-		Our objective function is as follows:
-		\[\sum_{i=1}^{n}\sum_{j=1}^{N} \log(P(x[j] = x_i[j]| y_i))\]
-		We can write this in a nicer form.
+		We solve for $p(x|y)$:
 		\begin{align*}
-			\sum_{i=1}^{n}\sum_{j=1}^{N} \log(P(x[j] = x_i[j]| y_i)) &= \sum_{i=1}^{n}\sum_{j=1}^{N} \log(p_j(x_i[j]|y_i))\\
-			&= \sum_{j=1}^{N}\sum_{i=1}^{n} \sum_{x \in \{0, 1\}}[[x_i[j] = x]]\log(p_j(x|y_i))\\
-			&= \sum_{j=1}^{N }\sum_{i=1}^{n} \sum_{x \in \{0, 1\}}\sum_{y \in \{0, 1\}} [[x_i[j] = x \land y_i = y]]\log(p_j(x|y))\\
-			&= \sum_{j=1}^{N }\sum_{x \in \{0, 1\}}\sum_{y \in \{0, 1\}} \log(p_j(x|y))\sum_{i=1}^{n}[[x_i[j] = x \land y_i = y]]\\
-			&= \sum_{j=1}^{N }\sum_{y \in \{0, 1\}}\sum_{x \in \{0, 1\}} \log(p_j(x|y))n_j(y, x)\\
-		\end{align*}
-		We now have the following constraints:
-		\[\sum_{x \in \{0, 1\}} p_j(x | y) = 1 \qquad \forall y \in \{0, 1\}, j \in [N]\]
-		This gives us the following Lagrangian:
-		\begin{align*}
-			\mathcal{L} &= \sum_{j=1}^{N }\sum_{y \in \{0, 1\}}\sum_{x \in \{0, 1\}} \log(p_j(x|y))n_j(y, x) + \sum_{j=1}^{N}\sum_{y \in \{0, 1\}} \lambda_j(y)\left(\sum_{x \in \{0, 1\}} p_j(x|y) - 1\right)\\
-		\end{align*}
-		Taking the derivatives with respect to $p_j(x|y)$, we have:
-		\begin{align*}
-			[p_j(x|y)] &: \frac{n_j(y, x)}{p_j(x|y)}  = \lambda_j(y)\\
-			[\lambda_j(y)] &: \sum_{x \in \{0, 1\}} p_j(x|y) = 1\\
-		\end{align*}
-		Since we have equality, in $\lambda_j(y)$, for $x \in \{0, 1\}$ we can solve for $p_j(x|y)$:
-		\begin{align*}
-			\frac{n_j(y,x)}{p_j(x|y)} &= \frac{n_j(y, 1-x)}{p_j(1-x|y)}\\
-			p_j(1-x|y) &= \frac{n_j(y, 1-x)}{n_j(y, x)}p_j(x|y)\\
-			\implies 1 &= p_j(x|y) + \frac{n_j(y, 1-x)}{n_j(y, x)}p_j(x|y)\\
-			n_j(y,x) &= p_j(x|y)n_j(y, x) + n_j(y, 1-x)p_j(x|y) \\
-			&= p_j(x|y)(n_j(y,x) + n_j(y, 1-x))\\
-			p_j(x|y) &= \frac{n_j(y,x)}{n_j(y,x) + n_j(y, 1-x)} \\
-			\hat{p}_j(x|y) &= \frac{n_j(y,x)}{n(y)}
+			\frac{n(x, y)}{p(x|y)} &= \frac{n(x', y)}{p(x'|y)}\\
+			p(x'|y) &= p(x|y)\frac{n(x', y)}{n(x, y)}\\
+			1 &= p(x|y) + \sum_{x' \neq x} p(x|y) \frac{n(x', y)}{n(x,y)}\\
+			n(x,y) &= p(x|y)\sum_{x' \in [D]} n(x', y) = p(x|y) n(y)\\
+			p(x|y) &= \frac{n(x,y)}{n(y)}\\
 		\end{align*}
 	\item 
 		Using Baye's Law, and conditional independence we have:
@@ -341,53 +329,50 @@ Solutions by {\bf Andrew Lys} \qquad Collaborated with {\bf Sam Fine}   %% <-- y
 			P(Y = 1|X = x) &= \frac{P(X = x| Y= 1)P(Y=1)}{P(X = x)}\\
 			&= \frac{P(X[1] = x[1], \ldots, X[N] = x[N]| Y = 1) P(Y = 1)}{P(X[1] = x[1], \ldots, X[N] = x[n])}\\
 			&= \frac{P(Y=1)\prod_{i=1}^{N} P(X[i] = x[i]|Y=1)}{P(X[1] = x[1], \ldots, X[N] = x[n]|Y = 1)P(Y = 1) + P(X[1] = x[1], \ldots, X[n] = x[n]| Y = 0) P(Y=0)}\\
-			&= \frac{p \prod_{i=1}^{N}p_i(x[i]|1)}{p\prod_{i=1}^{N}p_i(x[i]|1) + (1-p)\prod_{i=1}^{N}p_i(x[i]|0)}\\
+			&= \frac{p(1) \prod_{i=1}^{N}p(x[i]|1)}{p(1)\prod_{i=1}^{N}p(x[i]|1) + p(0)\prod_{i=1}^{N}p(x[i]|0)}\\
 		\end{align*}
 		Now we can reduce this into the form of a logistic function.
 		\begin{align*}
-			P(Y = 1|X = x) &= \frac{p \prod_{i=1}^{N}p_i(x[i]|1)}{p\prod_{i=1}^{N}p_i(x[i]|1) + (1-p)\prod_{i=1}^{N}p_i(x[i]|0)}\\
-			&= \frac{1}{1 + \frac{1-p}{p}\frac{\prod_{i=1}^{N}p_i(x[i]|0)}{\prod_{i=1}^{N}p_i(x[i]|1)}}\\
-			&= \frac{1}{1 + e^{-(\log(\frac{p}{1-p}) + \sum_{i=1}^{N}\log(\frac{p_i(x[i]|1)}{p_i(x[i]|0)}))}}\\
+			P(Y = 1| X = x) &= \frac{1}{1 + \frac{p(0)}{p(1)}\prod_{i = 1}^{N} \frac{p(x[i]|0)}{p(x[i]|1)}}\\
+			&= \frac{1}{1 + \exp{-\left(\log\frac{p(1)}{p(0)} + \sum_{i=1}^{N}\log\frac{p(x[i]|1)}{p(x[i]|0)}\right)}}\\
 		\end{align*}
 		Therefore, we can get our discriminant as follows:
 		\begin{align*}
-			r(x) &= \log\left(\frac{p}{1-p}\right) + \sum_{i=1}^{N}\log\left(\frac{p_i(x[i]|1)}{p_i(x[i]|0)}\right)\\
+			r(x) &= \log\frac{p(1)}{p(0)} + \sum_{i=1}^{N}\log\frac{p(x[i]|1)}{p(x[i]|0)}\\
 		\end{align*}	
 	\item 
 		We can simplify the discriminant by noting
 		\begin{align*}
-			p_i(x|y) &= p_i(1|y)^{x}p_i(0|y)^{1-x}\\
+			p(x|y) &= \prod_{x' \in [D]} p(x'|y)^{[[x' = x]]}\\
 		\end{align*}
 		Giving us
 		\begin{align*}
-			r(x) &= \log\left(\frac{p}{1-p}\right) + \sum_{i=1}^{N}\log\left(\frac{p_i(1|1)^{x[i]}p_i(0|1)^{1-x[i]}}{p_i(1|0)^{x[i]}p_i(0|0)^{1-x[i]}}\right)\\
-			&= \log\left(\frac{p}{1-p}\right) + \sum_{i=1}^{N}\left(x[i]\log\left(\frac{p_i(1|1)}{p_i(1|0)}\right) + (1-x[i])\log\left(\frac{p_i(0|1)}{p_i(0|0)}\right)\right)\\
-			&= \log\left(\frac{p}{1-p}\right) + \sum_{i=1}^{N}x[i]\left(\log\left(\frac{p_i(1|1)}{p_i(1|0)}\right) -\log\left(\frac{p_i(0|1)}{p_i(0|0)}\right)\right) + \log\left(\frac{p_i(0|1)}{p_i(0|0)}\right)\\
-			&= \log\left(\frac{p}{1-p}\right) + \sum_{i=1}^{N}x[i]\log\left(\frac{p_i(1|1)}{p_i(1|0)}\right) + -x[i]\log\left(\frac{p_i(0|1)}{p_i(0|0)}\right) + \log\left(\frac{p_i(0|1)}{p_i(0|0)}\right) \\
-			&= \log\left(\frac{p}{1-p}\right) + \sum_{i=1}^{N}\log\left(\frac{p_i(0|1)}{p_i(0|0)}\right) + \sum_{i=1}^{N}x[i]\left(\log\left(\frac{p_i(1|1)}{p_i(0|1)}\frac{p_i(0|0)}{p_i(1|0)}\right)\right)\\
+			r(x) &= \log\frac{p(1)}{p(0)} + \sum_{i=1}^{N} \log(p(x[i]|1)) - \sum_{i=1}^{N} \log(p(x[i]|0))\\
+			&= \log\frac{p(1)}{p(0)} + \sum_{i=1}^{N} \log\prod_{x'\in [D]} p(x'|1)^{[[x[i] = x']]} - \sum_{i=1}^{N} \log\prod_{x'\in [D]} p(x'|0)^{[[x[i] = x']]}\\
+			&= \log\frac{p(1)}{p(0)} + \sum_{i=1}^{N} \sum_{x'\in [D]} [[x[i] = x']]\log \frac{p(x'|1)}{p(x'|0)}\\
+			&= \log\frac{p(1)}{p(0)} + \sum_{x' \in [D]} \log \frac{p(x'|1)}{p(x'|0)}\sum_{i=1}^{N} [[x[i] = x']]\\
 		\end{align*}
-		The feature map must include a constant $1$ to account for the term on the left, and must have $N$ more features for each of $x[i]$. Thus, our feature map is simply:
-		\[\phi: x \mapsto (1, x[1], \ldots, x[N])\]
-		Therefore, our vector $w$, such that $r(x) = \langle w, \phi(x)\rangle$, is:
-		\[w = \left(\log\left(\frac{p}{1-p}\right) + \sum_{i=1}^{N}\log\left(\frac{p_i(0|1)}{p_i(0|0)}\right), \log\left(\frac{p_1(1|1)}{p_1(0|1)}\frac{p_1(0|0)}{p_1(1|0)}\right), \ldots, \log\left(\frac{p_N(1|1)}{p_N(0|1)}\frac{p_N(0|0)}{p_N(1|0)}\right)\right)\]
+		This leads us to consider a bag of words, with a bias term, feature map for $x$. Specifically, we define $\phi: \mathcal{X} \to \rr^{D+1}$ as follows:
+		\[\phi : x \mapsto \left(1, \sum_{i=1}^{N} [[x[i] = 1]], \ldots, \sum_{i = 1}^{N} [[x[i] = D]]\right)\]
+		Thus, we define our vector $w$ as follows:
+		\begin{align*}
+			w &= \left(\log\frac{p(1)}{p(0)}, \log \frac{p(1|1)}{p(1|0)}, \ldots, \log \frac{p(D|1)}{p(D|0)}\right)\\
+		\end{align*}
+		We can see that $r(x) = \langle w, \phi(x)\rangle$.
 	\item 
 		The log odds term in the bias has a simple interpretation. 
 		\begin{align*}
-			\frac{\hat{p}}{1-\hat{p}} &= \frac{n(1)/n}{n(0)/n} = \frac{n(1)}{n(0)}\\
-			\log\left(\frac{\hat{p}}{1-\hat{p}}\right) &= \log\left(\frac{n(1)}{n(0)}\right)\\
+			\frac{\hat{p}(1)}{\hat{p}(0)} &= \frac{n(1)/n}{n(0)/n} = \frac{n(1)}{n(0)} \implies \log\frac{\hat{p}(1)}{\hat{p}(0)} = \log\frac{n(1)}{n(0)}\\
 		\end{align*}
-		Similarly, 
+		We simplify the other terms.
 		\begin{align*}
-			\frac{\hat{p}_i(x|y)}{\hat{p}_i(x'|y')} &= \frac{n_i(y, x)/n(y)}{n_i(y',x')/n(y')}\\
-		\end{align*}
-		So, 
-		\begin{align*}
-			\frac{\hat{p}_i(0|1)}{\hat{p}_i(0|0)} &= \frac{n_i(1, 0)}{n_i(0, 0)}\frac{n(0)}{n(1)}\\
-			\frac{\hat{p}_i(1|1)\hat{p}_i(0|0)}{\hat{p}_i(0|1)\hat{p}_i(1|0)} &= \frac{n_i(1, 1)/n(1) n_i(0, 0)/n(0)}{n_i(1, 0)/n(1) n_i(0, 1)/n(0)}\\
-			&= \frac{n_i(1,1)n_i(0,0)}{n_i(1,0)n_i(0,1)}\\
+			\log\frac{\hat{p}(x|1)}{\hat{p}(x|0)} &= \log\frac{n(x, 1)/n(1)}{n(x, 0)/n(0)}\\
+			&= \log\frac{n(x,1)}{n(x,0)} - \log\frac{n(1)}{n(0)}\\
 		\end{align*}
 		So we have the following simplification for $w$:
-		\[w = \left((N-1)\log\frac{n(0)}{n(1)} + \sum_{i = 1}^{N} \log \frac{n_i(1, 0)}{n_i(0,0)}, \log \frac{n_1(1,1)n_1(0,0)}{n_1(1,0)n_1(0,1)}, \ldots, \log \frac{n_N(1,1)n_N(0,0)}{n_N(1,0)n_N(0,1)}\right)\]
+		\begin{align*}
+			w &= \left(\log\frac{n(1)}{n(0)}, \log\frac{n(1, 1)}{n(1, 0)} - \log\frac{n(1)}{n(0)}, \ldots, \log\frac{n(D, 1)}{n(D, 0)} - \log\frac{n(1)}{n(0)}\right)\\
+		\end{align*}
 \end{enumerate}
 \subsection{Adding a Prior}
 \begin{enumerate}[(a)]
@@ -397,50 +382,52 @@ Solutions by {\bf Andrew Lys} \qquad Collaborated with {\bf Sam Fine}   %% <-- y
 		In our case, 
 		\[\theta = (p, \{p_y\})\]
 		Where we define:
-		\[p = P(y = 1)\]
-		\[p_y[i] = P(x[i] = 1|y)\]
-		and $p_y$ is a vector of $N$ elements.
+		\[p(y) = P(Y = y)\]
+		\[p_i(x|y) = P(X[i] = x| Y = y)\]
+		However, note that by the conditional independence assumption, we have that $p_i(x|y) = p_j(x|y)$ for all $i, j \in [N]$.
+		Therefore, we can just define $p_y = p(\cdot|y) = p_i(\cdot|y)$ for all $i \in [N]$, and treat $p_y$ as a $D$ dimensional vector.
 		Let $S$ be a sample of $n$ i.i.d. points.
 		\[S = ((x_1, y_1), \ldots, (x_n, y_n))\]
-		our posterior distribution, $p(\theta|S)$ is given by:
+		Our posterior distribution, $p(\theta|S)$ is given by:
 		\begin{align*}
-			p(p, \{p_y\}|S) &= \frac{p(S|p, \{p_y\}) p(p, \{p_y\})}{p(S)}\\
-			&= \frac{p(X|Y, p, \{p_y\}) p(Y|p, \{p_y\}) p(p, \{p_y\})}{p(S)}\\
-			&= \frac{p(X|Y, \{p_y\})p(Y|p)p(p, \{p, p_y\})}{p(X|Y)p(Y)}
+			P(\theta|S) &= \frac{P(S|\theta) P(\theta)}{P(S)}\\
+			&= \frac{P(X|Y,\theta) P(Y|\theta) P(\theta)}{P(S)}\\
+			&= \frac{P(X|Y, \{p_y\})P(Y|p)P(\theta)}{P(X|Y)P(Y)}
 		\end{align*}
 		where $X$ is the vector of $x_i$'s and $Y$ is the vector of $y_i$'s.
 
 		Note that, we are not conditioning the denominator with respect to the parameters we are optimizing over.
-		The denominator is the distribution over the distributions of $p$ and $\{p_y\}$.
+		The denominator is the intergral over the distributions of $p$ and $\{p_y\}$, meaning the values of $p$ and $p_y$ that we end up choosing do not impact its value.
 		Therefore, we can ignore it in the optimization problem.
 		\begin{align*}
-			\hat{\theta} &= \arg\max_{p, \{p_y\}} p(X|Y, \{p_y\})p(Y|p)p(p, \{p_y\})\\
+			\hat{\theta} &= \arg\max_{p, \{p_y\}} P(X|Y, \{p_y\})P(Y|p)P(p, \{p_y\})\\
 		\end{align*}
 		We break this expression down, term by term, first focusing on the last term.
 		\begin{align*}
-			p(p, \{p_y\}) &= p(p)p(\{p_y\}) = f_{Dir(1)}(p) p(p_1)p(p_0)\\
+			P(p, \{p_y\}) &= P(p)P(\{p_y\}) = f_{Dir(1)}(p) P(p_1)P(p_0)\\
 			&= f_{Dir(\alpha)}(p_1)f_{Dir(\alpha)}(p_0)\\
-			&= \frac{1}{Z(\alpha)^2} \prod_{i=1}^{N} p_1[i]^{\alpha - 1}p_0[i]^{\alpha - 1}\\
+			&= \frac{1}{Z(\alpha)^2} \prod_{x \in [D]} p(x|1)^{\alpha - 1}p(x|0)^{\alpha - 1}\\
 		\end{align*}
 		Since $Z(\alpha)^2$ is fixed, we can ignore it in the expression for $\hat{\theta}$.
 		Now we focus on the second term.
 		\begin{align*}
-			p(Y|p) &= P(Y_1 = y_1, \ldots, Y_n = y_n|p) = \prod_{i=1}^{n} P(Y_i = y_i|p)\\
-			&= \prod_{i=1}^{n } p^{y_i}(1-p)^{1-y_i}\\
+			P(Y|p) &= P(Y_1 = y_1, \ldots, Y_n = y_n|p) = \prod_{i=1}^{n} P(Y_i = y_i|p)\\
+			&= \prod_{i=1}^{n } \prod_{y \in \{0, 1\}} p(y)^{[[y_i = y]]}\\
 		\end{align*}
 		Now we focus on the first term.
 		\begin{align*}
-			p(X|Y, \{p_y\}) &= P(X_1 = x_1, \ldots, X_n = x_n|Y_1 = y_1, \ldots, Y_n = y_n, \{p_y\})\\
+			P(X|Y, \{p_y\}) &= P(X_1 = x_1, \ldots, X_n = x_n|Y_1 = y_1, \ldots, Y_n = y_n, \{p_y\})\\
 			&= \prod_{i=1}^{n} P(X_i = x_i|Y_1 = y_1, \ldots, Y_n = y_n, \{p_y\})\\
 			&= \prod_{i=1}^{n} P(X_i = x_i|Y_i = y_i, \{p_y\})\\
 			&= \prod_{i=1}^{n} P(X_i[1] = x_i[1], \ldots, X_i[N] = x_i[N]|Y_i = y_i, \{p_y\})\\
 			&= \prod_{i=1}^{n} \prod_{j=1}^{N} P(X_i[j] = x_i[j]|Y_i = y_i, \{p_y\})\\
+			&= \prod_{i=1}^{n} \prod_{j=1}^{N} p(x_i[j]|y_i)\\
 		\end{align*}
 		Since $\log$ is monotone, we can take the $\log$ of our expression to get the $\arg\max$.
 		\begin{align*}
-			\hat{\theta}&=\arg\max_{p, \{p_y\}} \sum_{i=1}^{n}\sum_{j=1}^{N} \log P(X_i[j] = x_i[j]|Y_i = y_i, \{p_y\}) \\
-			&+ \sum_{i=1}^{n} y_i\log(p) + (1-y_i)\log(1-p) \\
-			&+ \sum_{i=1}^{N}\sum_{y \in \{0,1\}}(\alpha - 1)\log(p_y[i])\\
+			\hat{\theta}&=\arg\max_{p, \{p_y\}} \sum_{i=1}^{n}\sum_{j=1}^{N} \log p(x_i[j]|y_i) 
+			+ \sum_{i=1}^{n} y_i\log(p) + (1-y_i)\log(1-p) 
+			+ \sum_{x \in [D]}\sum_{y \in \{0, 1\}} (\alpha - 1) \log p(x|y)
 		\end{align*}
 		First, we get $\hat{p}$ by differentiating with respect to $p$ and setting it to zero.
 		\begin{align*}
@@ -450,126 +437,346 @@ Solutions by {\bf Andrew Lys} \qquad Collaborated with {\bf Sam Fine}   %% <-- y
 			p &= \frac{\sum_{i=1}^{n} y_i}{n} = \frac{n(1)}{n}
 		\end{align*}
 		Where $n(y)$ is the number of $y_i$'s that are equal to $y$.
-		Before we try and solve for $p_y[i]$, we can do a better job at simplifying the first term. 
+		Before we try and solve for $p(x|y)$, we can do a better job at simplifying the first term. 
 		\begin{align*}
-			\log P(X_i[j] = x_i[j]|Y_i = y_i, \{p_y\}) &= [[x_i[j] = 1]]\log(p_{y_i}[j]) + [[x_i[j] = 0]] \log(1-p_{y_i}[j])\\
-			&= \log(p_{y_i}[j]^{x_i[j]}(1-p_{y_i}[j])^{1-x_i[j]})\\
-			&= \sum_{y \in \{0, 1\}} [[y_i = y]]\log(p_{y}[j]^{x_i[j]}(1-p_{y}[j])^{1-x_i[j]})\\
-			\implies & \sum_{i=1}^{n}\sum_{j=1}^{N} \log P(X_i[j] = x_i[j]|Y_i = y_i, \{p_y\})\\
-			&=\sum_{i=1}^{n} \sum_{j=1}^{N} \sum_{y \in \{0, 1\}} [[y_i = y]]\log(p_{y}[j]^{x_i[j]}(1-p_{y}[j])^{1-x_i[j]})\\ 
-			&= \sum_{j=1}^{N} \sum_{i=1}^{n} \sum_{y \in \{0, 1\}} \sum_{x \in \{0, 1\}} [[y_i = y \land x_i[j] = x]]\log(p_{y}[j]^{x}(1-p_{y}[j])^{1-x})\\
-			&= \sum_{j=1}^{N} \sum_{y \in \{0, 1\}} \sum_{x \in \{0, 1\}} \log(p_{y}[j]^{x}(1-p_{y}[j])^{1-x})\sum_{i=1}^{n}[[y_i = y \land x_i[j] = x]]\\
-			&= \sum_{j=1}^{N} \sum_{y \in \{0, 1\}} \sum_{x \in \{0, 1\}} \log(p_{y}[j]^{x}(1-p_{y}[j])^{1-x})n_j(x, y)\\
-			&= \sum_{j=1}^{N} \sum_{y \in \{0, 1\}} \sum_{x \in \{0, 1\}} n_j(x, y) (x\log(p_{y}[j]) + (1-x)\log(1-p_{y}[j]))\\
+			\sum_{i=1}^{n}\sum_{j=1}^{N} \log p(x_i[j]|y_i)&= \sum_{i=1}^{n}\sum_{j=1}^{N} \sum_{x \in [D]} [[x_i[j] = x]]\log(p(x|y_i))\\
+			&= \sum_{i=1}^{n}\sum_{j=1}^{N} \sum_{x \in [D]} \sum_{y \in \{0, 1\}} [[x_i[j] = x \land y_i = y]]\log(p(x|y))\\
+			&= \sum_{y \in \{0, 1\}} \sum_{x \in [D]}\sum_{j=1}^{N} \log(p(x|y))\sum_{i=1}^{n}[[x_i[j] = x \land y_i = y]]\\
+			&=\sum_{y \in \{0, 1\}} \sum_{x \in [D]} \sum_{j=1}^{N}\log(p(x|y))n_j(x,y)\\
+			&= \sum_{y \in \{0, 1\}} \sum_{x \in [D]} n(x,y)\log(p(x|y))\\
 		\end{align*}
-		Where $n_j(x,y)$ is the number of $(x_i, y_i)$'s such that $x_i[j]=x$ and $y_i = y$. 
-		We differentiate with respect to $p_{y}[j]$ and set equal to zero.
+		Where $n_j(x,y)$ is the number of $(x_i, y_i)$'s such that $x_i[j]=x$ and $y_i = y$, and $n(x,y)$ is the number of $(x_i, y_i)$'s such that $x_i[j] = x$ and $y_i = y$, for some $j \in [N]$.
+		We then have the following Lagrangian for $p(x|y)$.
 		\begin{align*}
-			\frac{d}{dp_{y}[j]}\hat{\theta} &= \sum_{x \in \{0, 1\}} n_j(x, y)\left(\frac{x}{p_{y}[j]} - \frac{1-x}{1-p_{y}[j]}\right) + (\alpha - 1)\frac{1}{p_{y}[j]} \\ 
-			&= n_j(1,y)\frac{1}{p_y[j]} - n_j(0,y)\frac{1}{1-p_y[j]} + (\alpha - 1)\frac{1}{p_{y}[j]} = 0\\
-			\implies \frac{1}{1-p_y[j]}n_j(0,y)&= \frac{1}{p_y[j]}(n_j(1,y) + (\alpha - 1)) \\
-			\implies \frac{1-p_y[j]}{p_y[j]} &= \frac{n_j(0, y)}{n_j(1, y) + (\alpha - 1)}\\
-			\implies p_y[j] &= \frac{n_j(1,y) + (\alpha - 1)}{n_j(0, y) + n_j(1, y) + (\alpha - 1)}\\
-			\implies \hat{p}_y[j]&= \frac{n_j(1,y) + (\alpha - 1)}{n(y) + (\alpha - 1)}\\
+			\mathcal{L} &= \sum_{y \in \{0, 1\}} \sum_{x \in [D]}\log(p(x|y))n(x,y) + \sum_{y \in \{0,1\}} \sum_{x \in [D]} (\alpha - 1) \log(p(x|y)) - \sum_{y \in \{0, 1\}} \lambda_y \left( \sum_{x \in [D]} p(x | y) - 1\right)\\
+			&= \sum_{y \in \{0, 1\}} \sum_{x \in [D]} (n(x,y) + (\alpha - 1)) \log p(x|y) - \sum_{y \in \{0, 1\}} \lambda_y \left( \sum_{x \in [D]} p(x | y) - 1\right)\\
+		\end{align*}
+		We take critical points.
+		\begin{align*}
+			[p(x|y)] &: \frac{n(x,y) + (\alpha - 1)}{p(x|y)} = \lambda_y\\
+			[\lambda_y] &: \sum_{x \in [D]} p(x|y) = 1\\
+		\end{align*}
+		We solve this system of equations.
+		\begin{align*}
+			\frac{n(x,y) + (\alpha - 1)}{p(x|y)} &= \frac{n(x',y) + (\alpha - 1)}{p(x'|y)}\\
+			p(x'|y) &= p(x|y)\frac{n(x',y) + (\alpha - 1)}{n(x,y) + (\alpha - 1)}\\
+			1 &= p(x|y) + \sum_{x' \neq x} p(x|y)\frac{n(x',y) + (\alpha - 1)}{n(x,y) + (\alpha - 1)}\\
+			n(x,y) + (\alpha - 1) &= p(x|y)\sum_{x' \in [D]} n(x',y) + (\alpha - 1)\\
+			\implies p(x|y) &= \frac{n(x,y) + (\alpha - 1)}{\sum_{x'\in [D]} n(x',y) + (\alpha - 1)}\\
 		\end{align*}
 	\item
 		Recall that the discriminant is given by 
-		\[r(x) = \log \frac{p}{1-p} + \sum_{i=1}^{N} \log\frac{p_1[i]^{x[i]}(1-p_1[i])^{x[i]}}{p_0[i]^{x[i]}(1-p_0[i]^{1-x[i]})}\]
-		We can simplify this
+		\[r(x) = \log\frac{p(1)}{p(0)} + \sum_{x' \in [D]} \log \frac{p(x'|1)}{p(x'|0)}\sum_{i=1}^{N} [[x[i] = x']]\]
+		We can take the same feature map as from before.
+		\[\phi: x\mapsto \left(1, \sum_{i=1}^{N} [[x[i] = 1]], \ldots, \sum_{i =1}^{N} [[x[i] = D]]\right)\]
+		We have the following $w \in \rr^{D+1}$ such that $r(x) = \langle w, \phi(x)\rangle$:
 		\begin{align*}
-			r(x) &= \log \frac{p}{1-p} + \sum_{i=1}^{N} \sum_{x \in \{0,1\}} [[x[i] = x]]\left(x\log\frac{p_1[i]}{p_0[i]} + (1-x)\log\frac{1-p_1[i]}{1-p_0[i]}\right)\\
-			&= \log \frac{p}{1-p} + \sum_{i=1}^{N} [[x[i] = 1]]\log\frac{p_1[i]}{p_0[i]} + [[x[i] = 0]]\log\frac{1-p_1[i]}{1-p_0[i]}\\
-		\end{align*}
-		Taking a slightly modified feature map from before, i.e. 
-		\[\phi: x\mapsto (x[1], \ldots, x[N])\]
-		We have the following $w \in \rr^N$ and $b$ in $\rr$ such that $r(x) = \langle w, \phi(x)\rangle + b$:
-		\begin{align*}
-			w[i] &= \log \frac{p_1[i]}{p_0[i]} - \log \frac{1-p_1[i]}{1 - p_0[i]}\\
-			b &= \log\frac{p}{1-p} + \sum_{i = 1}^{N} \log \frac{1-p_1[i]}{1 - p_0[i]}\\
+			w[1] &= \log\frac{p(1)}{p(0)}\\
+			w[1 + x] &= \log\frac{p(x|1)}{p(x|0)}\\
 		\end{align*}
 		Now we can easily plug in our MAP estimators. 
 		\begin{align*}
-			w[i] &= \log \frac{n_i(1,1) + (\alpha - 1)}{n(1) + (\alpha - 1)} \frac{n(0) + (\alpha-1)}{n_i(1,0) + (\alpha - 1)} - \log \frac{n_i(0,1)}{n(1) + (\alpha - 1)} \frac{n(0) + (\alpha - 1)}{n_i(0,0)}\\
-			&= \log \frac{n_i(1,1) + (\alpha - 1)}{n_i(1,0) + (\alpha - 1)} - \log \frac{n_i(0,1)}{n_i(0,0)}\\
-			b &= \log\frac{n(1)/n}{n(0)/n} + \sum_{i = 1}^{N} \log \frac{n_i(0,1)}{n(1) + (\alpha - 1)}\frac{n(0) + (\alpha -1)}{n_i(0,0)}\\
-			&= \log\frac{n(1)}{n(0)} + \sum_{i = 1}^{N} \log \frac{n_i(0,1)}{n(1) + (\alpha - 1)}\frac{n(0) + (\alpha -1)}{n_i(0,0)}\\
+			w[1] &= \log\frac{n(1)}{n(0)}\\
+			w[1 + x] &= \log\frac{n(x, 1) + (\alpha - 1)}{\sum_{x'\in [D]} n(x', 1) + (\alpha - 1)}\frac{\sum_{x' \in [D]} n(x', 0) + (\alpha - 1)}{n(x,0) + (\alpha - 1)}\\
+			&= \log\frac{n(x, 1) + (\alpha - 1)}{n(x,0) + (\alpha - 1)} - \log\frac{\sum_{x' \in [D]} n(x', 1) + (\alpha - 1)}{\sum_{x' \in [D]} n(x', 0) + (\alpha - 1)}\\
 		\end{align*}
 \end{enumerate}
 \subsection{Multiple Classes}
 \begin{enumerate}[(a)]
 	\item 
-		Let $p(k) = P(Y = k)$ and $p_i(x|y) = P(X[i] = x|Y = y)$.
+		Let $p(k) = P(Y = k)$ and $p_i(x|y) = P(X[i] = x|Y = y)$. 
+		As before, we assume that $X[i]$ is drawn identically from $p_y$, so for every $i$, we let $p_y = p( \cdot | y) = p_i( \cdot | y)$.
+		We derive the posterior distribution.
 		\begin{align*}
-			P(Y = y|x) &= \frac{P(X = x|Y = y) P(Y = y)}{P(X = x)} = \frac{P(X[1] = x[1], \ldots, X[N] = x[n]| Y = y)p(y)}{P(X=x|Y = 1) P(Y = 1) + \ldots + P(X=x| Y = k)P(Y=k)}\\
-			&= \frac{p(y)\prod_{i=1}^{N}p_i(x[i]|y)}{\sum_{j=1}^{k} p(j)\prod_{i=1}^{N}p_i(x[i]|j)}\\
+			P(Y = y|X = x) &= \frac{P(X = x|Y = y) P(Y = y)}{P(X = x)} = \frac{P(X[1] = x[1], \ldots, X[N] = x[n]| Y = y)p(y)}{P(X=x|Y = 1) P(Y = 1) + \ldots + P(X=x| Y = k)P(Y=k)}\\
+			&= \frac{p(y)\prod_{i=1}^{N}p(x[i]|y)}{\sum_{y' \in \mathcal{Y}} p(y')\prod_{i=1}^{N}p(x[i]|y')} \\
 		\end{align*}
 	\item
-		We solve the equation:
-		\[\exp(\langle w_y, \phi(x)\rangle) = p(y) \prod_{i=1}^{N}p_i(x[i]|y)\]
+		From part (a), we solve the equation:
+		\[\exp(\langle w_y, \phi(x)\rangle) = p(y) \prod_{i=1}^{N}p(x[i]|y)\]
 		We take the log of both sides and simplify.
 		\begin{align*}
-			\langle w_y, \phi(x)\rangle &= \log(p(y)) + \sum_{i=1}^{N} \log(p_i(x[i]|y))\\
-			&= \log(p(y)) + \sum_{i=1}^{N} [[x[i] = 1]]\log(p_i(1|y)) + [[x[i] = 0]] \log(p_i(0|y))\\
+			\langle w_y, \phi(x)\rangle &= \log p(y) + \sum_{i=1}^{N} \log p(x[i]|y)\\
+			&= \log p(y) + \sum_{i=1}^{N} \sum_{x' \in [D]} [[x[i] = x']]\log p(x'|y)\\
+			&= \log p(y) + \sum_{x' \in [D]} \log p(x'|y)\sum_{i=1}^{N} [[x[i] = x']]\\
 		\end{align*}
 		We let the feature map be 
-		\[\phi: x \mapsto (x[1], \ldots, x[N], 1)\]
+		\[\phi: x \mapsto \left(1, \sum_{i =1}^{N} [[x[i] = 1]], \ldots, \sum_{i=1}^{N}[[x[i] = D]]\right)\]
 		And we let $w_y \in \rr^{N+1}$ be 
-		\[w_y = \left((\log(p_i(1|y)) - \log(p_i(0|y)))_{i=1}^N, \log(p(y)) + \sum_{i=1}^{N} \log(p_i(0|y)) \right)\]
+		\[w_y = \left(\log p(y), \log p(1|y), \ldots, \log p(D|y)\right)\]
 	\item 
-		For convenience, we write the bias term separate from $w$. 
 		The process for computing the MAP estimators for the parameters is almost entirely the same as before.
 		Our objective function, for a sample $S = X \times Y$ is as follows:
 		\begin{align*}
-			p(X|Y, \{p_y\})p(Y|p)p(p, \{p_y\}) &= \prod_{i=1}^{n} p(X = x_i|Y = y_i, \{p_y\})p(Y = y_i|p)p(p) p(\{p_y\})\\
-			&= \prod_{i=1}^{n} \prod_{j=1}^{N}\prod_{l=1}^k p(X[j] = x_i[j]|Y_i = y_i, \{p_y\})p(Y = y_i|p)\frac{1}{Z(1)}p_l^{1 - 1} \frac{1}{Z(\alpha)^k}p_l[j]^{\alpha - 1}\\
-			&= \frac{1}{Z(\alpha)^k}\prod_{i=1}^{n} \prod_{j=1}^{N}\prod_{l=1}^k p_j(x_i[j]|y_i)p(y_i)p_l[j]^{\alpha - 1}\\
+			P(X|Y, \{p_y\})P(Y|p)P(p, \{p_y\}) &= \prod_{i=1}^{n} P(X = x_i|Y = y_i, \{p_y\})P(Y = y_i|p)P(p) P(\{p_y\})\\
+			&= \prod_{i=1}^{n} \prod_{j=1}^{N}\prod_{y=1}^k\prod_{x = 1}^D P(X[j] = x_i[j]|Y_i = y_i, \{p_y\})P(Y = y_i|p)\frac{1}{Z(1)}p(y)^{1 - 1} \frac{1}{Z(\alpha)^k}p_y(x)^{\alpha - 1}\\
+			&= \frac{1}{Z(\alpha)^k Z(1)}\prod_{i=1}^{n} \prod_{j=1}^{N}\prod_{y=1}^k\prod_{x = 1}^D p(x_i[j]|y_i)p(y_i)p_y(x)^{\alpha - 1}\\
 		\end{align*}
 		Again, we can disregard the constant, and take $\log$, to get the following:
 		\begin{align*}
-			&\sum_{i=1}^{n}\sum_{j=1}^{N}\log p_j(x_i[j]|y_i) + \sum_{i=1}^{n} \log(p(y_i)) + \sum_{l=1}^{k}\sum_{j=1}^{N}(\alpha - 1)\log(p_l[j])\\
-			&= \sum_{j=1}^N \sum_{l=1}^k \sum_{x \in \{0,1\}} \sum_{i=1}^n [[x_i[j] = x \land y_i = l]] \log(p_j(x|l))\\
-			&+ \sum_{l=1}^{k}\sum_{i=1}^{n}[[y_i = l]] \log(p(l)) + \sum_{l=1}^{k}\sum_{j=1}^{N}(\alpha - 1)\log(p_l[j])\\
-			&= \sum_{j=1}^N \sum_{l=1}^k \sum_{x \in \{0,1\}} n_j(x, l) \log(p_j(x|l)) + \sum_{l=1}^{k}n(l) \log(p(l)) + \sum_{l=1}^{k}\sum_{j=1}^{N}(\alpha - 1)\log(p_l[j])\\
-			&= \sum_{j=1}^{N}\sum_{l=1}^{k} n_j(1, l) \log(p_l[j]) + n_j(0, l)\log(1 - p_l[j]) + \sum_{l=1}^{k}n(l) \log(p(l)) + \sum_{l=1}^{k}\sum_{j=1}^{N}(\alpha - 1)\log(p_l[j])\\
+			\sum_{i = 1}^{n }&\sum_{j=1}^{N} \log p(x_i[j]|y_i) + \sum_{i=1}^{n} \log p(y_i) + \sum_{y=1}^{k}\sum_{x = 1}^{D} (\alpha - 1)\log p_y(x)\\
+			&= \sum_{y=1}^{k} \sum_{x = 1}^{D} \sum_{i=1}^{n}\sum_{j = 1}^{N} [[x_i[j] = x \land y_i = y]]\log p(x|y) + \sum_{i=1}^{n} \sum_{y=1}^{k} [[y_i = y]]\log p(y) + \sum_{y=1}^{k}\sum_{x = 1}^{D} (\alpha - 1)\log p_y(x)\\
+			&= \sum_{y= 1}^{k} \sum_{x = 1}^{D} n(x,y)\log p(x|y) + \sum_{y=1}^{k} n(y)\log p(y) + \sum_{y=1}^{k}\sum_{x = 1}^{D} (\alpha - 1)\log p_y(x)\\
+			&= \sum_{y= 1}^{k} \sum_{x = 1}^{D} (n(x,y) + (\alpha - 1))\log p(x|y) + \sum_{y=1}^{k} n(y)\log p(y)\\
 		\end{align*}
-		Since we no longer have two $p(l)$'s, we need to apply Lagrange multipliers, with the constraint:
-		\[\sum_{l=1}^k p(l) = 1\] 
-		We can write the Lagrangian, together with the first order conditions, as follows:
+		We have a constrained optimization problem with the following constraints:
+		\[\sum_{y=1}^k p(y) = 1\] 
+		\[\sum_{x = 1}^{D} p(x|y) = 1\]
+		We write the Lagrangian.
+		\[\mathcal{L} = \sum_{y = 1}^{k}\sum_{x = 1}^{D} (n(x,y) + (\alpha - 1) \log p(x|y)) + \sum_{y = 1}^{k} n(y) \log p(y) - \sum_{y = 1}^{k}\lambda_y \left(-1 + \sum_{x = 1}^{D} p(x|y)\right) - \mu \left(-1 + \sum_{y = 1}^{k} p(k)\right)\]
+		This gives us the following critical points:
 		\begin{align*}
-			\mathcal{L} &= \sum_{l=1}^{k}n(l) \log(p(l)) - \lambda(\sum_{l=1}^{k} p(l) - 1)\\
-			[p(l)] &: \frac{n(l)}{p(l)} = \lambda\\
-			[\lambda] &: \sum_{l=1}^{k} p(l) = 1\\
-			\implies 1 &= p(l) + \sum_{m\neq l} \frac{n(m)}{n(l)} p(l)\\
-			\implies n(l)&= p(l)\sum_{l=1}^{k}n(l) = p(l)n\\
-			\implies \hat{p}(l) &= \frac{n(l)}{n}\\
+			[p(x|y)] &: \frac{n(x,y) + (\alpha - 1)}{p(x|y)} = \lambda_y\\
+			[\lambda_y] &: \sum_{x = 1}^{D} p(x|y) = 1\\
+			[p(y)] &: \frac{n(y)}{p(y)} = \mu\\
+			[\mu] &: \sum_{y = 1}^{k} p(y) = 1\\
 		\end{align*}
-		We can now differentiate with respect to $p_l[j]$ and set equal to zero.
+		We solve for $p(y)$.
 		\begin{align*}
-			0 &= \frac{n_j(1,l)}{p_l[j]} - \frac{n_j(0,l)}{1 - p_l[j]} + \frac{\alpha - 1}{p_l[j]}\\
-			\frac{p_l[j]}{1 - p_l[j]} &= \frac{n_j(1,l) + (\alpha - 1)}{n_j(0,l)}\\
-			\hat{p}_l[j] &= \frac{n_j(1,l) + (\alpha - 1)}{n_j(0,l) + n_j(1,l) + (\alpha - 1)} = \frac{n_j(1,l) + (\alpha - 1)}{n(l) + (\alpha - 1)}\\
+			\frac{n(y)}{p(y)} &= \frac{n(y')}{p(y')}\\
+			p(y') &= p(y)\frac{n(y')}{n(y)}\\
+			1 &= p(y) + \sum_{y' \neq y} p(y)\frac{n(y')}{n(y)}\\
+			n(y) &= p(y)\sum_{y' \in [k]} n(y') = p(y)n\\
+			p(y) &= \frac{n(y)}{n}\\
 		\end{align*}
-		Plugging $\hat{p}(l)$ and $\hat{p}_l[j]$ into $w_y$, we have:
+		We solve for $p(x|y)$.
 		\begin{align*}
-			w_y[j] &= \log p_y[j] - \log(1- p_y[j]) = \log \frac{n_j(1,y) + (\alpha - 1)}{n(y) + (\alpha - 1)} - \log \frac{n(0, l) + (\alpha - 1)}{n(l) + (\alpha - 1)}\\
-			&= \log \frac{n_j(1,y) + (\alpha - 1)}{n_j(0,y) + (\alpha - 1)}\\
-			b &= \log(p(y)) + \sum_{j=1}^{N} \log(1-p_y[j]) = \log\frac{n(y)}{n} + \sum_{j=1}^{N} \log\frac{n_j(0,y) + (\alpha - 1)}{n(y) + (\alpha - 1)}\\
+			\frac{n(x,y) + (\alpha - 1)}{p(x|y)} &= \frac{n(x',y) + (\alpha - 1)}{p(x'|y)}\\
+			p(x'|y) &= p(x|y)\frac{n(x',y) + (\alpha - 1)}{n(x,y) + (\alpha - 1)}\\
+			1 &= p(x|y) + \sum_{x' \neq x} p(x|y)\frac{n(x',y) + (\alpha - 1)}{n(x,y) + (\alpha - 1)}\\
+			n(x,y) + (\alpha - 1) &= p(x|y)\sum_{x' \in [D]} n(x',y) + (\alpha - 1)\\
+			\implies p(x|y) &= \frac{n(x,y) + (\alpha - 1)}{\sum_{x' \in [D]} n(x',y) + (\alpha - 1)}\\
+		\end{align*}
+		Now we can plug in our MAP estimators.
+		\begin{align*}
+			w_y[1] &= \log\frac{n(y)}{n}\\
+			w_y[1 + x] &= \log\frac{n(x,y) + (\alpha - 1)}{\sum_{x' \in [D]} n(x',y) + (\alpha - 1)}\\
 		\end{align*}
 	\item 
 		We write $-\log P(\{y_i\}|\{x_i\}, \{w_y\}) = -\log P(Y|X, W)$. Recall the posterior:
-		\[P(Y = y| x) = \frac{\exp(r_y(x))}{\sum_{l=1}^{k}\exp(r_l(x))}= \frac{\exp(\langle w_y, \phi(x)\rangle)}{\sum_{l=1}^{k} \exp(\langle w_l, \phi(x) \rangle)}\]
+		\[P(Y = y| x) = \frac{\exp(r_y(x))}{\sum_{y'=1}^{k}\exp(r_{y'}(x))}= \frac{\exp(\langle w_y, \phi(x)\rangle)}{\sum_{y'=1}^{k} \exp(\langle w_{y'}, \phi(x) \rangle)}\]
 		Noting that $(x_i, y_i)$ are i.i.d., we have:
 		\begin{align*}
-			P(Y|X, w) &= \prod_{i=1}^{n} P(Y_i = y_i|X_i = x_i, w) = \prod_{i=1}^{n} \frac{\exp(\langle w_{y_i}, \phi(x_i)\rangle)}{\sum_{l=1}^{k} \exp(\langle w_l, \phi(x_i) \rangle)}\\
-			-\log P(Y|X, w) &= \sum_{i=1}^{n} \log \sum_{l=1}^{k} \exp(\langle w_l, \phi(x_i)\rangle) - \sum_{i=1}^{n} \langle w_{y_i}, \phi(x_i)\rangle\\
+			P(Y|X, w) &= \prod_{i=1}^{n} P(Y_i = y_i|X_i = x_i, W) = \prod_{i=1}^{n} \frac{\exp(\langle w_{y_i}, \phi(x_i)\rangle)}{\sum_{l=1}^{k} \exp(\langle w_l, \phi(x_i) \rangle)}\\
+			-\log P(Y|X, w) &= -\left(\sum_{i=1}^{n}\langle w_{y_i}, \phi(x_i)\rangle  - \sum_{i=1}^{n} \log \sum_{y=1}^{k} \exp(\langle w_y, \phi(x_i)\rangle)\right)\\
 		\end{align*}
 	\item 
 		\begin{align*}
-			-\log P(Y|X, w) &= \sum_{i=1}^{n} \left(\log\left(\sum_{l=1}^{k} \exp(\langle w_l, \phi(x_i)\rangle)\right) - \langle w_{y_i}, \phi(x_i)\rangle \right)\\
-			\ell(y_i; r_1(x), \ldots, r_k(x))&= \log\left(\sum_{l=1}^{k} \exp(r_l(x))\right) - \log(\exp(r_{y_i}(x)))\\
-			&= \log\left(\frac{\exp(r_{y_i}(x))}{\sum_{l=1}^{k} \exp(r_l(x))}\right) = \log\left(\sum_{l=1}^{k} \exp(r_l(x) - r_{y_i}(x))\right)\\
-			&= \log\left(\sum_{l=1}^{k} \exp(\langle w_l - w_{y_i}, \phi(x)\rangle)\right)
+			-\log P(Y|X, w) &= -\left(\sum_{i=1}^{n}\langle w_{y_i}, \phi(x_i)\rangle  - \sum_{i=1}^{n} \log \sum_{y=1}^{k} \exp(\langle w_y, \phi(x_i)\rangle)\right)\\
+			&= -\sum_{i = 1}^{n} \log \sum_{y=1}^{k} \frac{\exp(\langle w_{y_i}, \phi(x_i)\rangle)}{\exp(\langle w_y, \phi (x_i)\rangle)}\\
+			&= -\sum_{i = 1}^{n} \log \sum_{y=1}^{k} \exp(\langle w_{y_i} - w_{y}, \phi(x_i)\rangle)\\
 		\end{align*}
+		Therefore, we have the following loss function:
+		\[
+		\ell(y_i; r_1(x), \ldots, r_k(x))= -\log \sum_{y = 1}^{k} \exp(r_{y_i}(x) - r_{y}(x))\\
+		\]
+		Or 
+		\[
+		\ell(y_i; r_1(x), \ldots, r_k(x))= - r_{y_i}(x) \log\sum_{y = 1}^{k} \exp(-r_{y}(x))\\
+		\]
 \end{enumerate}
 \subsection{Adding Dependencies: A Markov Model}
+\begin{enumerate}[(a)]
+	\item 
+		Let $S = \{(x_1, y_1), \ldots (x_n, y_n)\}$, where $x_i \in [D]^N$ and $y_i \in [k]$.
+		Let $(p_{\mathrm{topic}})_{\mathrm{topic}\in\mathcal{Y}} = p \in [0,1]^k$. 
+		Let $p_{y, \mathrm{init}} = p_{y, 0} \in [0,1]^D$, and let $p_{y, \mathrm{tran}} = p_{y} \in [0,1]^{D \times D}$. 
+		Let $\theta = (p, \{p_{y, 0}\}, \{p_y\})$. 
+		We also need to define the following summary statistic. For indices $I = \{i_1, \ldots, i_m\}\subset N$, $x \in \{0, 1\}^N$, and $y \in [k]$:
+		\[
+		n_{i_1, \ldots, i_m}(x_{i_1}, \ldots, x_{i_m}| y) = |\{(x_j, y_j)\in S|x_j \restriction I \equiv x\restriction I, y_j = y \}|
+		\]
+		We let 
+		\[n(x, x', y) = \sum_{j = 1}^{N - 1} n_{j+1, j}(x, x' |y)\]
+		We have the following log likelihood:
+		\begin{align*}
+			\ell(\theta|S)&= \sum_{i=1}^{n}\log P(X = x_i, Y = y_i|\theta)
+		\end{align*}
+		We can simplify this.
+		\begin{align*}
+			\log P(X = x_i, Y = y_i|\theta) &= \log P(X = x_i|Y = y_i, \theta) + \log P(Y = y_i|\theta) = \log P(X = x_i | Y = y_i, \theta) + \sum_{y = 1}^{k} [[y_i = y]] \log p(y)
+		\end{align*}
+		We can simplify the first term.
+		\begin{align*}
+			P(X = x_i| Y= y_i, \theta) &= P(X[1] = x_i[1], \ldots, X[N] = x_i[N]|Y = y_i, \theta)\\
+			&= P(X[1] = x_i[1], \ldots, X[N] = x_i[N]|X[1] = x_i[1], \ldots, X[N-1] = x_i[N-1], Y = y_i, \theta)\\
+			& \qquad \cdot P(X[1] = x_i[1], \ldots, X[N-1] = x_i[N-1]| Y = y_i, \theta)\\
+			&= P(X[N] = x_i[N]|X[N-1] = x_i[N-1], Y = y_i, \theta)\\
+			& \qquad \cdot P(X[1] = x_i[1], \ldots, X[N-1] = x_i[N-1]| Y = y_i, \theta)\\
+			&= p_{y_i}(x_i[N]|x_i[N-1]) P(X[1] = x_i[1], \ldots, X[N-1] = x_i[N-1]| Y = y_i, \theta)\\
+			&= p_{y_i}(x_i[N]|x_i[N-1])\cdot \ldots \cdot p_{y_i}(x_i[2]|x_i[1])p_{y_i, 0}(x_i[1])\\
+			\implies \log P(X = x_i| Y= y_i, \theta) &= \log p_{y_i, 0}(x_i[1]) + \sum_{j=1}^{N-1} \log p_{y_i}(x_i[j + 1]|x_i[j]) 
+		\end{align*}
+		This gives us the following log likelihood:
+		\begin{align*}
+			\ell(\theta|S) &= \sum_{i=1}^{n} \log p_{y_i, 0}(x_i[1]) + \sum_{i=1}^{n}\sum_{j=1}^{N-1} \log p_{y_i}(x_i[j + 1]|x_i[j]) + \sum_{i=1}^{n}\sum_{y = 1}^{k} [[y_i = y]] \log p(y)\\
+			&= \sum_{i = 1}^n \sum_{y = 1}^{k} \sum_{x \in [D]}[[y_i = y \land x_i[1] = x]] \log p_{l, 0}(x)\\
+			&+ \sum_{i = 1}^n \sum_{j = 1}^{N-1} \sum_{y = 1}^{k} \sum_{x, x' \in [D]} [[y_i = y \land x_i[j] = x \land x_i[j + 1] = x']] \log p_{l}(x'|x)\\
+			&+ \sum_{i = 1}^n \sum_{y = 1}^{k} [[y_i = y]] \log p(y)\\
+			&= \sum_{y=1}^{k} \sum_{x \in [D]} n_1(x, y) \log p_{l, 0}(x) + \sum_{y=1}^{k}\sum_{x, x' \in [D]}\log p_{y}(x'|x)\sum_{j = 1}^{N-1}n_{j, j+1}(x, x'|y) + \sum_{y=1}^{k}n(y)\log p(y)\\
+			&= \sum_{y=1}^{k} \sum_{x \in [D]} n_1(x, y) \log p_{l, 0}(x) + \sum_{y=1}^{k}\sum_{x, x' \in [D]}\log p_{y}(x'|x)n(x, x'|y) + \sum_{y=1}^{k}n(y)\log p(y)\\
+		\end{align*}
+		We have the following Lagrangian:
+		\begin{align*}
+			\mathcal{L} &= \sum_{y = 1}^{k} n(y) \log p(y) - \lambda_1 \left(-1 + \sum_{y=1}^{k} p(y) \right)\\
+			&+ \sum_{y=1}^{k} \sum_{x, x' \in [D]}\log p_{y}(x'|x) n(x, x'|y) - \sum_{y=1}^{k}\sum_{x = 1}^{D}\lambda_2(x, y) \left(-1 + \sum_{x' = 1}^{D}p_y(x'|x)\right)\\
+			&+ \sum_{y=1}^{k}n_1(x, y) \log p_{y, 0}(x) - \sum_{y=1}^{k}\lambda_3(y)\left(-1 + \sum_{x = 1}^D p_{y, 0}(x)\right)
+		\end{align*}
+		We have the following critical points:
+		\begin{align}
+			[p(y)] &: \frac{n(y)}{p(y)} = \lambda_1\\
+			[\lambda_1] &: \sum_{y=1}^{k} p(y) = 1\\
+			[p_y(x'|x)] &: \frac{n(x, x'|y)}{p_y(x'|x)} = \lambda_2(x, y)\\
+			[\lambda_2(x, y)] &: \sum_{x' \in [D]} p_y(x'|x) = 1\\
+			[p_{y, 0}(x)] &: \frac{n_1(x, y)}{p_{y, 0}(x)} = \lambda_3(y)\\
+			[\lambda_3(y)] &: \sum_{x \in [D]} p_{y, 0}(x) = 1
+		\end{align}
+		As before, $(1)$ and $(2)$ give us:
+		\begin{align*}
+			p(y) &= \frac{n(y)}{n}\\
+		\end{align*}
+		$(3)$ and $(4)$ give us:
+		\begin{align*}
+			\frac{n(x, x'|y)}{p_y(x'|x)} &= \frac{n(x, x''|y)}{p_y(x''|x)}\\
+			p_y(x''|x) &= p_y(x'|x)\frac{n(x, x''|y)}{n(x, x'|y)}\\
+			1 &= p_y(x'|x) + \sum_{x'' \neq x'}p_y(x'|x)\frac{n(x, x''|y)}{n(x, x'|y)}\\
+			n(x, x'|y) &= p_y(x'|x)\sum_{x'' \in [D]} n(x, x''|y)\\
+			\implies p_y(x'|x) &= \frac{n(x, x'|y)}{\sum_{x'' \in [D]} n(x, x''|y)} = \frac{n(x, x'|y)}{n(x, y)}\\
+		\end{align*}
+		$(5)$ and $(6)$ give us:
+		\begin{align*}
+			\frac{n_1(x, y)}{p_{y, 0}(x)} &= \frac{n_1(x', y)}{p_{y, 0}(x')}\implies p_{y, 0}(x') = p_{y, 0}(x)\frac{n_1(x', y)}{n_1(x, y)}\\
+			1 &= p_{y, 0}(x) + \sum_{x' \neq x}p_{y, 0}(x)\frac{n_1(x', y)}{n_1(x, y)}\\
+			n_1(x, y) &= p_{y, 0}(x)\sum_{x' \in [D]} n_1(x', y)\\
+			\implies p_{y, 0}(x) &= \frac{n_1(x, y)}{\sum_{x' \in [D]} n_1(x', y)} = \frac{n_1(x,y)}{n(y)}
+		\end{align*}
+		To summarize, we have:
+		\begin{align*}
+			p(y) &= \frac{n(y)}{n}\\
+			p_y(x'|x) &= \frac{n(x, x'|y)}{n(x, y)}\\
+			p_{y, 0}(x) &= \frac{n_1(x, y)}{n(y)}
+		\end{align*}
+	\item 
+		The calculations for $P(Y|p)$ are the same as before. We calculate $P(X|Y, \{p_y\}, \{p_{y, 0}\})$.
+		\begin{align*}
+			P(X = x|Y = y, \{p_y\}, \{p_{y, 0}\}) &= P(X[1] = x[1], \ldots, X[N] = x[N]|Y, \{p_y\}, \{p_{y, 0}\})\\
+			&= P(X[1] = x[1], \ldots, X[N] = x[N]| Y, \{p_y\}, \{p_{y, 0}\})\\
+			&= P(X[1] = x[1], \ldots , X[N] = x[N]| X[1] = x[1], \ldots, X[N-1] = x[N-1], Y, \{p_y\}, \{p_{y, 0}\})\\
+			&\qquad\cdot P(X[1] = x[1], \ldots, X[N-1] = x[N-1]| Y, \{p_y\}, \{p_{y, 0}\})\\
+			&= P(X[N] = x[N]|X[N-1] = x[N-1], Y, \{p_y\}, \{p_{y, 0}\})\\
+			&\qquad\cdot P(X[1] = x[1], \ldots, X[N-1] = x[N-1]| Y, \{p_y\}, \{p_{y, 0}\})\\
+			&= p_{y}(x[N]|x[N-1])P(X[1] = x[1], \ldots, X[N-1] = x[N-1]| Y, \{p_y\}, \{p_{y, 0}\})\\
+			&= p_{y}(x[N]|x[N-1])\cdots p_{y}(x[2]|x[1])p_{y, 0}(x[1])\\
+		\end{align*}
+		Thus, applying this to the sample, we have:
+		\begin{align*}
+			P(X|Y, \{p_y\}, \{p_{y, 0}\}) &= \prod_{i=1}^{n} P(X = x_i|Y = y_i, \{p_y\}, \{p_{y, 0}\})\\
+			&= \prod_{i=1}^{n} p_{y_i}(x_i[N]|x_i[N-1])\cdots p_{y_i}(x_i[2]|x_i[1])p_{y_i, 0}(x_i[1])\\
+			&= \prod_{i=1}^{n} p_{y_i, 0}(x_i[1])\prod_{j=1}^{N-1} p_{y_i}(x_i[j + 1]|x_i[j])\\
+		\end{align*}
+		We calculate $P(p, \{p_y\}, \{p_{y, 0}\})$.
+		\begin{align*}
+			P(p, \{p_y\}, \{p_{y, 0}\}) &= P(p)P(\{p_y\})P(\{p_{y, 0}\})\\
+			P(p) &= \frac{1}{Z(1)}\prod_{y=1}^{k} p(y)^{\alpha - 1} = \frac{1}{Z(1)}\\
+			P(\{p_y\}) &= \prod_{y=1}^{k} P(p_y)\\
+			P(p_y(\cdot |x))&=\frac{1}{Z(\alpha)}\prod_{x' = 1}^{D} p_y(x'|x)^{\alpha - 1}\\
+			\implies P(p_y) &= \frac{1}{Z(\alpha)^D} \prod_{x, x' \in [D]} p_y(x'|x)^{\alpha - 1}\\
+			\implies P(\{p_y\}) &= \frac{1}{Z(\alpha)^{kD}} \prod_{y=1}^{k}\prod_{x, x' \in [D]} p_y(x'|x)^{\alpha - 1}\\
+			P(\{p_{y, 0}\}) &= \prod_{y=1}^{k} P(p_{y, 0}) = \frac{1}{(Z(\alpha)^k)}\prod_{y=1}^{k} \prod_{x \in [D]} p_{y, 0}(x)^{\alpha - 1}\\
+		\end{align*}
+		As before, we may neglect the constants and take the log.
+		\begin{align*}
+			&\sum_{i = 1}^{n}\log(p_{y_i, 0})(x_i[1]) + \sum_{i = 1}^{n}\sum_{j = 1}^{N-1}\log p_{y_i}(x_i[j + 1]|x_i[j])\\
+			&+ \sum_{i=1}^{n} \log p(y_i) + \sum_{y=1}^{k}\sum_{x, x' \in [D]} (\alpha - 1) (\log p_y(x'|x) + \log p_{y, 0}(x))\\
+		\end{align*}
+		We can simplify this expression in the usual way.
+		\begin{align*}
+			&= \sum_{y=1}^{k}\sum_{x \in [D]} n_1(x, y)\log p_{y, 0}(x) + \sum_{y=1}^{k}\sum_{x, x' \in [D]} n(x, x'|y)\log p_y(x'|x)\\
+			&+ \sum_{y=1}^{k}n(y)\log p(y) + \sum_{y=1}^{k}\sum_{x, x' \in [D]} (\alpha - 1)(\log p_y(x'|x) + \log p_{y, 0}(x))\\
+			&= \sum_{y=1}^{k}\sum_{x \in [D]} (n_1(x,y) + (\alpha - 1))\log p_{y, 0}(x) + \sum_{y=1}^{k}\sum_{x, x' \in [D]} (n(x, x'|y) + (\alpha - 1))\log p_y(x'|x)
+			+ \sum_{y=1}^{k}n(y)\log p(y)\\
+		\end{align*}
+		We solve the following Lagrangian
+		\begin{align*}
+			\mathcal{L} &= \sum_{y=1}^{k}\sum_{x \in [D]} (n_1(x,y) + (\alpha - 1))\log p_{y, 0}(x) - \sum_{y=1}^{k}\lambda_1(y)\left(-1 + \sum_{x \in [D]} p_{y, 0}(x)\right)\\
+			&+ \sum_{y=1}^{k}\sum_{x, x' \in [D]} (n(x, x'|y) + (\alpha - 1))\log p_y(x'|x) - \sum_{y=1}^{k}\sum_{x \in [D]}\lambda_2(x, y)\left(-1 + \sum_{x' \in [D]} p_y(x'|x)\right)\\
+			&+ \sum_{y=1}^{k}n(y)\log p(y) - \lambda_3\left(-1 + \sum_{y = 1}^{k} p(y)\right)\\
+		\end{align*}
+		We take critical points.
+		\begin{align*}
+			[p_{y, 0}(x)] &: \frac{n_1(x,y) + (\alpha - 1)}{p_{y, 0}(x)} = \lambda_1(y)\\
+			[\lambda_1(y)] &: \sum_{x \in [D]} p_{y, 0}(x) = 1\\
+			[p_y(x'|x)] &: \frac{n(x, x'|y) + (\alpha - 1)}{p_y(x'|x)} = \lambda_2(x, y)\\
+			[\lambda_2(x, y)] &: \sum_{x' \in [D]} p_y(x'|x) = 1\\
+			[p(y)] &: \frac{n(y)}{p(y)} = \lambda_3\\
+			[\lambda_3] &: \sum_{y=1}^{k} p(y) = 1\\
+		\end{align*}
+		We solve for $p_{y, 0}(x)$.
+		\begin{align*}
+			\frac{n_1(x,y) + (\alpha - 1)}{p_{y, 0}(x)} &= \frac{n_1(x',y) + (\alpha - 1)}{p_{y, 0}(x')}\implies p_{y, 0}(x') = p_{y, 0}(x)\frac{n_1(x', y) + (\alpha - 1)}{n_1(x, y) + (\alpha - 1)}\\
+			1 &= p_{y, 0}(x) + \sum_{x' \neq x}p_{y, 0}(x)\frac{n_1(x', y) + (\alpha - 1)}{n_1(x, y) + (\alpha - 1)}\\
+			n_1(x, y) + (\alpha - 1) &= p_{y, 0}(x)\sum_{x' \in [D]} n_1(x', y) + (\alpha - 1)\\
+			\implies p_{y, 0}(x) &= \frac{n_1(x,y) + (\alpha - 1)}{\sum_{x' \in [D]} n_1(x', y) + (\alpha - 1)} = \frac{n_1(x,y) + (\alpha - 1)}{n(y) + (\alpha - 1)}\\
+		\end{align*}
+		We solve for $p_y(x'|x)$.
+		\begin{align*}
+			\frac{n(x, x'|y) + (\alpha - 1)}{p_y(x'|x)} &= \frac{n(x, x''|y) + (\alpha - 1)}{p_y(x''|x)}\implies p_y(x''|x) = p_y(x'|x)\frac{n(x, x''|y) + (\alpha - 1)}{n(x, x'|y) + (\alpha - 1)}\\
+			1 &= p_y(x'|x) + \sum_{x'' \neq x'}p_y(x'|x)\frac{n(x, x''|y) + (\alpha - 1)}{n(x, x'|y) + (\alpha - 1)}\\
+			n(x, x'| y) + (\alpha - 1) &= p_y(x'|x)\sum_{x'' \in [D]} n(x, x''|y) + (\alpha - 1)\\
+			\implies p_y(x'|x) &= \frac{n(x, x'|y) + (\alpha - 1)}{\sum_{x'' \in [D]} n(x, x''|y) + (\alpha - 1)} = \frac{n(x, x'|y) + (\alpha - 1)}{n(x,y) + (\alpha - 1)}\\
+		\end{align*}
+		We solve for $p(y)$.
+		\begin{align*}
+			\frac{n(y)}{p(y)} &= \frac{n(y')}{p(y')}\implies p(y') = p(y)\frac{n(y')}{n(y)}\\
+			1 &= p(y) + \sum_{y' \neq y}p(y)\frac{n(y')}{n(y)}\\
+			n &= p(y)\sum_{y' \in [k]} n(y') = p(y)n\\
+			p(y) &= \frac{n(y)}{n}\\
+		\end{align*}
+	\item
+		We compute the posterior as follows:
+		\begin{align*}
+			P(Y = 1|X = x) &= \frac{P(X = x| Y = 1)P(Y = 1)}{P(X = x)} \\
+			&= \frac{P(X = x|Y = 1)P(Y = 1)}{P(X = x|Y = 1)P(Y = 1) + P(X = x|Y = 0)P(Y = 0)}\\
+		\end{align*}
+		We compute $P(X = x|Y = y)$ using part $(a)$. 
+		\begin{align*}
+			P(X = x|Y = y) &= p_{y, 0}(x[1])\prod_{i=1}^{N-1}p_y(x[i + 1]|x[i])\\
+		\end{align*}
+		Thus, we have our posterior distribution as follows:
+		\begin{align*}
+			P(Y = 1|X = x) &= \frac{p_{1, 0}(x[1])\prod_{i=1}^{N-1}p_1(x[i + 1]|x[i])P(Y = 1)}{p_{1, 0}(x[1])\prod_{i=1}^{N-1}p_1(x[i + 1]|x[i])P(Y = 1) + p_{0, 0}(x[1])\prod_{i=1}^{N-1}p_0(x[i + 1]|x[i])P(Y = 0)}\\
+			&= \frac{1}{1 + \frac{p_{0,0}(x[1])}{p_{1,0}(x[1])}\frac{p(0)}{p(1)}\prod_{i=1}^{N-1}\frac{p_0(x[i + 1]|x[i])}{p_1(x[i + 1]|x[i])}}\\
+		\end{align*}
+		We solve the following equation:
+		\begin{align*}
+			\exp(-r(x)) &= \frac{p_{0,0}(x[1])}{p_{1,0}(x[1])}\frac{p(0)}{p(1)}\prod_{i=1}^{N-1}\frac{p_0(x[i + 1]|x[i])}{p_1(x[i + 1]|x[i])}\\
+			\implies r(x) &= \log \frac{p(1)p_{1,0}(x[1])}{p(0)p_{0,0}(x[1])} + \sum_{i=1}^{N-1}\log\frac{p_1(x[i + 1]|x[i])}{p_0(x[i + 1]|x[i])}\\
+		\end{align*}
+	\item
+		\begin{align*}
+			r(x) &= \log \frac{p(1)}{p(0)} + \sum_{x = 1}^{D}[[x[1] = x]]\log \frac{p_{1, 0}(x)}{p_{0, 0}(x)} + \sum_{i=1}^{N-1}\sum_{x, x' = 1}^{D}[[x[i] = x \land x[i + 1] = x']]\log\frac{p_1(x'|x)}{p_0(x'|x)}\\
+			&= \log \frac{p(1)}{p(0)} + \sum_{x, x' = 1}^{D} n_1(x)\log \frac{p_{1, 0}(x)}{p_{0, 0}(x)} +  n(x, x')\log\frac{p_1(x'|x)}{p_0(x'|x)}\\
+		\end{align*}
+		This results in the following feature map $\phi : \mathcal{X} \to \rr^{D^2 + D + 1}$.
+		\begin{align*}
+			\phi: x \mapsto (1, n_1(1), \ldots, n_1(D), n(1, 1), \ldots, n(D, D))\\	
+		\end{align*}
+		Thus results in the following vector $w$:
+		\begin{align*}
+			w &= \left(\log \frac{p(1)}{p(0)}, \log \frac{p_{1,0}(1)}{p_{0,0}(1)}, \ldots, \log \frac{p_{1,0}(D)}{p_{0,0}(D)}, \log \frac{p_1(1|1)}{p_0(1|1)}, \ldots, \log \frac{p_1(D|D)}{p_0(D|D)}\right)\\
+		\end{align*}
+	\item 
+		We plug in the MAP estimators into the components.
+		\begin{align*}
+			\log \frac{p(1)}{p(0)} &= \log \frac{n(1)}{n(0)}\\
+			\log \frac{p_{1,0}(x)}{p_{0,0}(x)} &= \log \frac{n_1(x, 1) + (\alpha - 1)}{n_1(x, 0) + (\alpha - 1)} - \log \frac{n(1) + (\alpha - 1)}{n(0) + (\alpha - 1)}\\
+			\log \frac{p_1(x'|x)}{p_0(x'|x)} &= \log \frac{n(x, x'| 1) + (\alpha - 1)}{n(x, x'|0) + (\alpha - 1)} - \log \frac{n(x, 1) + (\alpha - 1)}{n(x, 0) + (\alpha - 1)}\\
+		\end{align*}
+		Thus, we have:
+		\begin{align*}
+		w &= \bigg(\log \frac{n(1)}{n(0)}, \log \frac{n_1(1, 1) + (\alpha - 1)}{n_1(1, 0) + (\alpha - 1)} - \log \frac{n(1) + (\alpha - 1)}{n(0) + (\alpha - 1)}, \\
+		&\ldots, \log \frac{n_1(D, 1) + (\alpha - 1)}{n_1(D, 0) + (\alpha - 1)} - \log \frac{n(1) + (\alpha - 1)}{n(0) + (\alpha - 1)}, \log \frac{n(1, 1| 1) + (\alpha - 1)}{n(1, 1|0) + (\alpha - 1)} - \log \frac{n(1, 1) + (\alpha - 1)}{n(1, 0) + (\alpha - 1)}, \\
+		&\ldots, \log \frac{n(D, D|D) + (\alpha - 1)}{n(D, D|0) + (\alpha - 1)} - \log \frac{n(D, D) + (\alpha - 1)}{n(D, 0) + (\alpha - 1)}\bigg)
+		\end{align*}
+\end{enumerate}
 \end{document}
