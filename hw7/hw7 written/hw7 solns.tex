@@ -46,6 +46,7 @@
 \DeclareMathOperator{\Sym}{Sym}
 \DeclareMathOperator{\Cov}{Cov}
 \DeclareMathOperator{\sign}{sign}
+\DeclareMathOperator{\lin}{lin}
 \newtheorem{theorem}{Theorem}
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}
@@ -194,5 +195,128 @@ Solutions by {\bf Andrew Lys} \qquad   %% <-- your name here ***
     \end{align*}
     In $G[:, i^{(t)}]$, we compute $m$ kernel evaluations. Dotting this with $\alpha^{(t)}$ is $O(m)$ operations, and taking the loss and the other operations is constant. 
     Therefore, the total number of operations is $O(T_k \cdot m)$.
+\end{enumerate}
+\subsection{Implicit Regularization in Gradient Descent}
+\begin{enumerate}[(a)]
+  \item 
+    Suppose we have $w \in \lin(\phi(x_1), \ldots, \phi(x_m))$. such that 
+    \begin{align*}
+      \Phi w &= y
+    \end{align*}
+    Since $w \in \lin(\phi(x_1), \ldots, \phi(x_m))$, we have that $w = \Phi^\top \alpha$ for some $\alpha \in \rr^m$. Therefore, we have:
+    \begin{align*}
+      \Phi \Phi^\top \alpha &= y\\
+      \alpha &= (\Phi \Phi^\top)^{-1} y\\
+      \implies w &= \Phi^\top (\Phi \Phi^\top)^{-1} y
+    \end{align*}
+    Since $\Phi$ has full row rank, we have that $\Phi \Phi^\top$ is invertible. Therefore, $w$ indeed exists, and $(\Phi \Phi^\top)^{-1} y$ is unique. 
+    Additionally, since $\Phi$ has full row rank, we have that $\Phi^\top$ has full column rank, so $\Phi^\top$ is injective. 
+    Therefore, $w$ is unique, and $w^\ast$ exists.
+    Finally, we have that $(\Phi \Phi^\top)^{-1} y \in \rr^M$, so $w^\ast \in \lin(\phi(x_1), \ldots, \phi(x_m))$.
+
+    Now we show that this is the minimum norm solution, i.e. 
+    \[w^\ast = \arg \min_{w \in \rr^d, L_S(w) = 0} \|w\|_2\]
+
+    Let $M = \lin(\phi(x_1), \ldots, \phi(x_m))$. Let $w \in \rr^d$ such that $L_S(w) = 0$. 
+    Suppose that $w \not \in M$. Let $P$ be the projection matrix onto $M$. i.e. 
+    \[P = \Phi^\top(\Phi\Phi^\top)^{-1}\Phi\]
+    Notice that:
+    \begin{align*}
+      \|\Phi P w - y\|_2 &= \| \Phi \Phi^\top (\Phi \Phi^\top)^{-1}\Phi w - y\|_2\\
+      &= \|\Phi w - y\|_2 = 0
+    \end{align*}
+    Since $Pw$ is in $M$ we have that $Pw = w^\ast$. We then have the following decomposition of $w$.
+    \[w = (w - Pw) + Pw = (w - Pw) + w^\ast\]
+    Where, $w - Pw$ is orthogonal $w^\ast$. Therefore, by the theorem of Pythagoras, we have:
+    \[\|w\|_2^2 = \|w - Pw\|_2^2 + \|w^\ast\|_2^2 > \|w^\ast\|_2^2\]
+    Therefore, if $w$ is a minimum norm solution, it must be in $M$, and as shown above, it must then be $w^\ast$.
+  \item
+    Let $M = \lin(\phi(x_1), \ldots, \phi(x_m))$. $w^{(0)} = 0 \in M$, so the base case is trivial.
+    Suppose that $w\in M$. Then we have that $w = \Phi^\top \alpha$ for some $\alpha \in \rr^m$.
+    We have that:
+    \begin{align*}
+      w &= \Phi^\top \alpha\\
+      \Phi w &= \Phi \Phi^\top \alpha\\
+      \alpha &= (\Phi \Phi^\top)^{-1} \Phi w\\
+    \end{align*}
+    We know that $\Phi \Phi^\top$ is invertible, since $\Phi$ has full row rank. We focus on the gradient of $L_S(w)$:
+    \begin{align*}
+      \nabla_w L_S(w) &= \frac{1}{m}  \nabla_w \|\Phi w - y\|_2^2\\
+      \nabla_w \|\Phi w - y\|_2^2 &= \nabla_w \|\Phi w \|_2^2 - \nabla_w 2 \langle \Phi w, y \rangle + \nabla_w \|y\|_2^2\\
+      &= \nabla_w \langle \Phi w, \Phi w \rangle - 2 \nabla_w \langle \Phi \Phi^\top \alpha, y \rangle\\
+      &= \nabla_w w^\top \Phi^\top \Phi w - 2 \nabla_w \langle \alpha, \Phi \Phi^\top y \rangle\\
+      &= 2 \Phi^\top \Phi w - 2 \nabla_w \alpha^\top \Phi \Phi^\top y\\
+      &= 2 \Phi^\top \Phi \Phi^\top \alpha - 2 \nabla_w w^\top \Phi^\top (\Phi \Phi^\top)^{-1} \Phi \Phi^\top y\\
+      &= 2 \Phi^\top (\Phi \Phi^\top) \alpha - 2 \Phi^\top y\\
+      &= \Phi^\top (2 \Phi \Phi^\top \alpha - 2 y) \in M\\
+      \implies \eta \nabla_w L_S(w) &\in M\\
+      \implies w - \eta \nabla_w L_S(w) &\in M
+    \end{align*}
+    Therefore, $w^{(t)} \in M$ for all $t$.
+
+    We show directly that $w^{(t)} \to w^\ast$. Note that $\Phi^\top \Phi$ is a symmetric $d \times d$ matrix, so it has non-negative real eigenvalues. 
+    Since the row rank of $\Phi$ is $m$, we have $m$ non-zero eigenvalues, and the non-zero eigenvalues of $\Phi^\top \Phi$ are the eigenvalues of $\Phi \Phi^\top$. 
+    Let the maximum and minimum eigenvalues of $\Phi \Phi^\top$ be $\lambda$ and $\Lambda$. Note that for any scalar $\alpha$, the eigenvalues of 
+    \[I - \alpha \Phi^\top \Phi\]
+    are between $1 - \alpha \Lambda$ and $1 - \alpha \lambda$.
+    We prove this:
+    Let $\mu$ be an eigenvalue of $I - \alpha \Phi^\top \Phi$, and let $v$ be an eigenvector. Then
+    \begin{align*}
+      (I - \alpha \Phi^\top \Phi)v &= \mu v\\
+      (1-\mu)v &= \alpha \Phi^\top \Phi v\\
+    \end{align*}
+    This implies that $\frac{1-\mu}{\alpha}$ is an eigenvalue of $\Phi^\top \Phi$, and so $\frac{1-\mu}{\alpha} \in [\lambda, \Lambda]$. 
+    Therefore, 
+    \begin{align*}
+      \lambda &< \frac{1-\mu}{\alpha} < \Lambda\\
+      \alpha \lambda &< 1 - \mu < \alpha \Lambda\\
+      1- \alpha \lambda &> \mu > 1 - \alpha \Lambda\\
+    \end{align*}
+    If $\alpha > 0$ and 
+    \begin{align*}
+      \alpha \lambda &> 1 - \mu > \alpha \Lambda\\
+      1 - \alpha \Lambda &< \mu < 1 - \alpha \lambda
+    \end{align*}
+    if $\alpha < 0$.
+    Either way, we have that $\mu$ is between $1- \alpha \lambda$ and $1- \alpha \Lambda$. 
+    Therefore, letting 
+    \[\rho := \max\left(\left|1 - \frac{\eta}{2m} \lambda\right|, \left| 1 - \frac{\eta}{2m}\Lambda \right|\right)\]
+    We have that 
+    \begin{align*}
+      \|(I - \alpha \Phi^\top \Phi) v\|_2 &\le \rho \|v\|_2
+    \end{align*}
+    for all $v$. 
+    From above, we have:
+    \begin{align*}
+      \nabla L_S(w) &= \frac{2}{m}\Phi^\top(\Phi w - y)\\
+    \end{align*}
+    Let $w^{\mathrm{GD}}$ such that $\Phi w^{\mathrm{GD}} = y$. Then we have:
+    \begin{align*}
+      \nabla L_S(w^{\mathrm{GD}}) &= 0
+    \end{align*}
+    Therefore, 
+    \begin{align*}
+      \|w^{(t+1)} - w^{\mathrm{GD}}\|_2 &= \|w^{(t)} - \eta \nabla L_S(w^{(t)}) - w^{\mathrm{GD}}\|_2\\
+      &= \|w^{(t)} - w^{\mathrm{GD}} - \eta (\nabla L_S(w^{(t)}) - \nabla L_S(w^{\mathrm{GD}}))\|_2\\
+      &= \|w^{(t)} - w^{\mathrm{GD}} - \eta \frac{2}{m}(\Phi^\top\Phi(w^{(t)} - w^{\mathrm{GD}}))\|_2\\
+      &= \|(I - \eta \frac{2}{m}\Phi^\top\Phi)(w^{(t)} - w^{\mathrm{GD}})\|_2\\
+      & \le \rho \|w^{(t)} - w^{\mathrm{GD}}\|_2\\
+      \implies &\le \rho^{t+1} \|w^{(0)} - w^{\mathrm{GD}}\|_2 = \rho^{t+1} \|w^{\mathrm{GD}}\|_2
+    \end{align*}
+    Therefore, if $\rho < 1$, we have that $w^{(t)} \to w^{\mathrm{GD}}$.
+    To make $\rho < 1$, we let 
+    \[\eta = \frac{4m}{\lambda + \Lambda}\]
+    Then we have:
+    \begin{align*}
+      \rho &= \max\left(\left|1 - \frac{\eta}{2m} \lambda\right|, \left| 1 - \frac{\eta}{2m}\Lambda \right|\right)\\
+      &= \max\left(\left|1 - \frac{2}{\lambda + \Lambda} \lambda\right|, \left| 1 - \frac{2}{\lambda + \Lambda}\Lambda \right|\right)\\
+      &= \max\left(\left|\frac{\Lambda - \lambda}{\lambda + \Lambda}\right|, \left| \frac{\Lambda - \lambda}{\lambda + \Lambda} \right|\right)\\
+      &= \frac{\Lambda - \lambda}{\lambda + \Lambda} = \frac{1 - \frac{\lambda}{\Lambda}}{1 + \frac{\lambda}{\Lambda}} < 1
+    \end{align*}
+    Therefore, we have that $w^{(t)} \to w^{\mathrm{GD}}$.
+    Thus, $w^{(t)}$ converges to a minimum norm solution. 
+    Further, since each $w^{(t)}$ is in $M$, and that $w^{(t)}$ is a convergent sequence, and that finite dimensional subspaces are always closed, 
+    $w^{(t)}$ converges to an element of $M$, so indeed $w^{\mathrm{GD}} \in M$. 
+    Since, $w^\ast$ is the unique zero error solution in $M$, we have $w^{\mathrm{GD}} = w^\ast$.
 \end{enumerate}
 \end{document}
