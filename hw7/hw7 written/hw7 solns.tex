@@ -1,0 +1,198 @@
+\frenchspacing
+\documentclass{amsart}
+\usepackage{amssymb}
+\usepackage{fancyhdr}
+\usepackage{bbm}
+\usepackage{enumerate}
+\usepackage{graphicx}
+\usepackage{tikz}
+\pagestyle{fancy}
+\usepackage[margin=1in]{geometry}
+\newgeometry{left=1.5cm, right=1.5cm, top = 1.5cm}
+\fancyhfoffset[E,O]{0pt}
+\allowdisplaybreaks
+
+
+\rhead{Andrew Lys}   %% <-- your name here
+\chead{Problem Set 7}
+\cfoot{\thepage}
+\lhead{\today}
+
+
+
+%% your macros -->
+\newcommand{\nn}{\mathbb N}    %% naturals
+\newcommand{\zz}{\mathbb Z}    %%integers
+\newcommand{\rr}{\mathbb R}    %% real numbers
+\newcommand{\cc}{\mathbb C}    %% complex numbers
+\newcommand{\ff}{\mathbb F}
+\newcommand{\qq}{\mathbb Q}
+\newcommand{\cA}{\mathcal{A}}
+\newcommand{\cP}{\mathcal{P}}
+\newcommand{\cN}{\mathcal{N}}
+\newcommand{\cM}{\mathcal{M}}
+\newcommand{\cB}{\mathcal{B}}
+\newcommand{\limn}{\lim_{n \to \infty}} %%lim n to infty shorthand
+\newcommand{\va}{\mathbf{a}}
+\newcommand{\vb}{\mathbf{b}}
+\newcommand{\vc}{\mathbf{c}}
+\newcommand{\vx}{\mathbf{x}}
+\newcommand{\vy}{\mathbf{y}}
+\newcommand{\vv}{\mathbf{v}}
+\newcommand{\vw}{\mathbf{w}}
+\newcommand{\vu}{\mathbf{u}}
+\DeclareMathOperator{\var}{Var}  %% variance
+\DeclareMathOperator{\Aut}{Aut}
+\DeclareMathOperator{\Sym}{Sym}
+\DeclareMathOperator{\Cov}{Cov}
+\DeclareMathOperator{\sign}{sign}
+\newtheorem{theorem}{Theorem}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{exercise}{Exercise}[section]
+\renewcommand{\thesubsection}{\arabic{subsection}}
+
+\begin{document}
+\noindent
+Problem Set   \hfill \today  %% <-- Update Notes here ***
+\smallskip
+\hrule
+\smallskip
+\noindent
+Solutions by {\bf Andrew Lys} \qquad   %% <-- your name here ***
+  {\tt andrewlys(at)u.e.}      %% <-- your uchicago email address here ***
+
+\vspace{0.5cm}
+\subsection{Kernelizing Gradient Descent}
+\begin{enumerate}[(a)]
+  \item 
+    First we compute the gradient of the loss function:
+    \begin{align*}
+      \nabla_{w} L_S(w) &= \frac{1}{m} \sum_{i=1}^{m} \nabla_{w} \ell(\langle w, \phi(x_i)\rangle; y_i)\\
+      &= \frac{1}{m} \sum_{i=1}^{m} \ell'(\langle w, \phi(x_i)\rangle; y_i) \nabla_{w} \langle w, \phi(x_i)\rangle\\
+      &= \frac{1}{m} \sum_{i=1}^{m} \ell'(\langle w, \phi(x_i)\rangle; y_i) \phi(x_i)
+    \end{align*}
+    Note that:
+    \begin{align*}
+      \langle w^{(t)}, \phi(x_i) \rangle &= \sum_{j=1}^{m} \alpha_j^{(t)} \langle \phi(x_j), \phi(x_i) \rangle\\
+      &= \sum_{j=1}^{m} \alpha_j^{(t)} K(x_j, x_i)
+    \end{align*}
+    So we have:
+    \begin{align*}
+      \nabla_w L_S(w^{(t)}) &= \frac{1}{m} \sum_{i=1}^{m} \ell'\left(\sum_{j=1}^{m} \alpha_j^{(t)} K(x_j, x_i); y_i\right) \phi(x_i)\\
+    \end{align*}
+    Therefore, we have:
+    \begin{align*}
+      w^{(t+1)} &= w^{(t)} - \eta \nabla_w L_S(w^{(t)})\\
+      &= \sum_{i=1}^{m} \alpha_i^{(t)} \phi(x_i) - \eta \frac{1}{m} \sum_{i=1}^{m} \ell'\left(\sum_{j=1}^{m} \alpha_j^{(t)} K(x_j, x_i); y_i\right) \phi(x_i)\\
+      \sum_{i=1}^{m} \alpha^{(t+1)}_i \phi(x_i)&= \sum_{i=1}^{m} \left[\alpha_i^{(t)} - \eta \frac{1}{m} \ell'\left(\sum_{j=1}^{m} \alpha_j^{(t)} K(x_j, x_i); y_i\right)\right] \phi(x_i)
+    \end{align*}
+    Therefore, we have:
+    \begin{align*}
+      \alpha_i^{(t+1)} = \alpha_i^{(t)} - \eta \frac{1}{m} \ell'\left(\sum_{j=1}^{m} \alpha_j^{(t)} K(x_j, x_i); y_i\right)
+    \end{align*}
+    For each particular $\alpha^{(t)}_i$, we compute the kernel $m$ times, $m$ multiplication operations and $m-1$ addition operations. 
+    We also have the constant time operations of $\ell'$ and multiplying by $\frac{\eta}{m}$. 
+    Therefore, the total number of operations is $O(T_k \cdot m + m + (m-1)) = O(T_k \cdot m)$. 
+    We perform $m$ of these operations, for each of the $\alpha$'s, so the total number of operations is $O(T_k \cdot m^2)$.
+  \item 
+    The only term that is different here is the addition of 
+    $\frac{\lambda}2 \|w\|_2^2$ to the loss function. We have the following gradient:
+    \begin{align*}
+      \nabla_w \|w\|_2^2 &= 2w = 2 \sum_{i=1}^{m} \alpha_i \phi(x_i)
+    \end{align*}
+    Therefore, our new $\alpha_{i}^{(t+1)}$ is:
+    \begin{align*}
+      \alpha_i^{(t+1)} &= \alpha_i^{(t)} - \eta \frac{1}{m} \ell'\left(\sum_{j=1}^{m} \alpha_j^{(t)} K(x_j, x_i); y_i\right) - \eta \lambda \alpha_i^{(t)}\\
+      &= \alpha_i^{(t)}(1 - \eta \lambda) - \eta \frac{1}{m} \ell'\left(\sum_{j=1}^{m} \alpha_j^{(t)} K(x_j, x_i); y_i\right)
+    \end{align*}
+  \item 
+    We investigate the $\|w\|_1$ term. We have the following gradient:
+    \begin{align*}
+      \nabla_w \|w\|_1 &= \begin{bmatrix}
+        \sign(w_1)\\
+        \sign(w_2)\\
+        \vdots\\
+        \sign(w_d)
+      \end{bmatrix} = \begin{bmatrix}
+        \sign(\sum_{i=1}^{m} \alpha_i \phi(x_i)_1)\\
+        \sign(\sum_{i=1}^{m} \alpha_i \phi(x_i)_2)\\
+        \vdots\\
+        \sign(\sum_{i=1}^{m} \alpha_i \phi(x_i)_d)
+      \end{bmatrix}
+    \end{align*}
+    It is not possible to write down this term in terms of the $K(x_i, x_j)$, since the sign function is not linear.
+    Further, we have that 
+    \begin{align*}
+      \nabla_w \|w\|_1 &\in \{\pm 1\}^d
+    \end{align*}
+    While it is not necessarily the case that the span of the data intersects this set. 
+    Therefore, it's possible that $\nabla_w \|w\|_1$ is linearly independent of the data, and so the iterates are also linearly independent of the data. 
+  \item 
+    Let $G = (K(x_i, x_j))_{i,j=1}^{m}$. Let $G[i]$ be the $i$th row of $G$, and let $G[:, j]$ be the $j$th column of $G$.
+    Note that 
+    \begin{align*}
+      \langle w(\alpha), \phi(x_i) \rangle &= \sum_{j=1}^{m} \alpha_j K(x_j, x_i)\\
+      &= \langle \alpha, G[:, i] \rangle
+    \end{align*}
+    Therefore, we have:
+    \begin{align*}
+      \nabla_\alpha \ell(\langle w(\alpha), \phi(x_i)\rangle; y_i) &= \nabla_\alpha \ell(\langle \alpha, G[:, i] \rangle; y_i)\\
+      &= \ell'(\langle \alpha, G[:, i] \rangle; y_i) G[:, i]
+    \end{align*}
+    And we have:
+    \begin{align*}
+      \nabla_\alpha L_S(w(\alpha)) &= \sum_{i=1}^{m}\ell'(\langle \alpha, G[:, i] \rangle; y_i) G[:, i]\\
+      &= G^\top (\ell'(\langle \alpha, G[:, i] \rangle; y_i))_{i=1}^{m}
+    \end{align*}
+    Therefore, we can write our $\alpha$ update as follows:
+    \begin{align*}
+      \alpha^{(t+1)} &= \alpha^{(t)} - \eta \frac{1}{m} G^\top (\ell'(\langle \alpha^{(t)}, G[:, i] \rangle; y_i))_{i=1}^{m}
+    \end{align*}
+    We can rewrite 1a. in terms of $G$ as follows:
+    \begin{align*}
+      \sum_{j=1}^{m} \alpha_j^{(t)} K(x_j, x_i) &= \langle \alpha^{(t)}, G[:, i] \rangle\\
+      \implies \alpha^{(t+1)} &= \alpha^{(t)} - \frac{\eta}{m} (\ell'(\langle \alpha^{(t)}, G[:, i] \rangle; y_i) )_{i=1}^{m}
+    \end{align*}
+    The place where this differs from the update we just computed is the in the multiplication by $G^\top$.
+    Therefore, if we let
+    \begin{align*}
+      \phi(x_1) &= \begin{bmatrix}
+        1\\
+        0
+      \end{bmatrix}\\
+      \phi(x_2) &= \begin{bmatrix}
+        1\\
+        1
+      \end{bmatrix}
+    \end{align*}
+    We get 
+    \begin{align*}
+      G &= \begin{bmatrix}
+        1 & 1\\
+        1 & 2
+      \end{bmatrix}
+    \end{align*}
+    So, we have:
+    \begin{align*}
+      G^\top (\ell'(\langle \alpha^{(t)}, G[:, i] \rangle; y_i))_{i=1}^{2} &\neq (\ell'(\langle \alpha^{(t)}, G[:, i] \rangle; y_i))_{i=1}^{2}
+    \end{align*}
+    Since $G^\top$ is not the identity.
+  \item
+    We may write the gradient with respect to $w$ as follows:
+    \begin{align*}
+      \nabla_w \ell(\langle w^{(t)}, \phi(x_{i^{(t)}})\rangle; y_{i^{(t)}}) &= \ell'(\langle w^{(t)}, \phi(x_{i^{(t)}})\rangle; y_{i^{(t)}}) \phi(x_{i^{(t)}})\\
+      &= \ell'(\langle \sum_{j=1}^{m} \alpha_j^{(t)} \phi(x_j), \phi(x_{i^{(t)}})\rangle; y_{i^{(t)}}) \phi(x_{i^{(t)}})\\
+      &= \ell'(\sum_{j=1}^{m} \alpha_j^{(t)} K(x_j, x_{i^{(t)}}); y_{i^{(t)}}) \phi(x_{i^{(t)}})\\
+      &= \ell'(\langle \alpha^{(t)}, G[:, i^{(t)}] \rangle; y_{i^{(t)}}) \phi(x_{i^{(t)}})
+    \end{align*}
+    Therefore, the only coordinate that is changed in $\alpha^{(t+1)}$ is $\alpha_{i^{(t)}}^{(t+1)}$.
+    Therefore, we have:
+    \begin{align*}
+      \alpha_{i}^{(t+1)} &= \alpha_{i}^{(t)} &&i \neq i^{(t)}\\
+      \alpha_{i}^{(t+1)} &= \alpha_{i^{(t)}}^{(t)} - \eta \ell'(\langle \alpha^{(t)}, G[:, i^{(t)}] \rangle; y_{i^{(t)}}) && i = i^{(t)}
+    \end{align*}
+    In $G[:, i^{(t)}]$, we compute $m$ kernel evaluations. Dotting this with $\alpha^{(t)}$ is $O(m)$ operations, and taking the loss and the other operations is constant. 
+    Therefore, the total number of operations is $O(T_k \cdot m)$.
+\end{enumerate}
+\end{document}
