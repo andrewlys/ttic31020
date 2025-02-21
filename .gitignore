@@ -120,3 +120,5 @@ hw7/hw7 written/hw7 solns.log
 hw7/hw7 written/hw7 solns.fls
 hw7/hw7 written/hw7 solns.aux
 hw7/hw7 written/hw7 solns.fdb_latexmk
+hw7/hw7 experimental/utils.py
+hw7/hw7 experimental/linclass.py
