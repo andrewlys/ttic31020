@@ -1,0 +1,82 @@
+\frenchspacing
+\documentclass{amsart}
+\usepackage{amssymb}
+\usepackage{fancyhdr}
+\usepackage{bbm}
+\usepackage{enumerate}
+\usepackage{graphicx}
+\usepackage{tikz}
+\pagestyle{fancy}
+\usepackage[margin=1in]{geometry}
+\newgeometry{left=1.5cm, right=1.5cm, top = 1.5cm}
+\fancyhfoffset[E,O]{0pt}
+\allowdisplaybreaks
+
+
+\rhead{Andrew Lys}   %% <-- your name here
+\chead{Problem Set 8}
+\cfoot{\thepage}
+\lhead{\today}
+
+
+
+%% your macros -->
+\newcommand{\nn}{\mathbb N}    %% naturals
+\newcommand{\zz}{\mathbb Z}    %%integers
+\newcommand{\rr}{\mathbb R}    %% real numbers
+\newcommand{\cc}{\mathbb C}    %% complex numbers
+\newcommand{\ff}{\mathbb F}
+\newcommand{\qq}{\mathbb Q}
+\newcommand{\cA}{\mathcal{A}}
+\newcommand{\cP}{\mathcal{P}}
+\newcommand{\cN}{\mathcal{N}}
+\newcommand{\cM}{\mathcal{M}}
+\newcommand{\cB}{\mathcal{B}}
+\newcommand{\limn}{\lim_{n \to \infty}} %%lim n to infty shorthand
+\newcommand{\va}{\mathbf{a}}
+\newcommand{\vb}{\mathbf{b}}
+\newcommand{\vc}{\mathbf{c}}
+\newcommand{\vx}{\mathbf{x}}
+\newcommand{\vy}{\mathbf{y}}
+\newcommand{\vv}{\mathbf{v}}
+\newcommand{\vw}{\mathbf{w}}
+\newcommand{\vu}{\mathbf{u}}
+\DeclareMathOperator{\Var}{Var}  %% variance
+\DeclareMathOperator{\Aut}{Aut}
+\DeclareMathOperator{\Sym}{Sym}
+\DeclareMathOperator{\Cov}{Cov}
+\newtheorem{theorem}{Theorem}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{exercise}{Exercise}[section]
+\renewcommand{\thesubsection}{\arabic{subsection}}
+
+\begin{document}
+\noindent
+Problem Set 8\hfill \today  %% <-- Update Notes here ***
+\smallskip
+\hrule
+\smallskip
+\noindent
+Solutions by {\bf Andrew Lys} \qquad   %% <-- your name here ***
+  {\tt andrewlys(at)u.e.}      %% <-- your uchicago email address here ***
+
+\vspace{0.5cm}
+\subsection{Feature Selection}
+\begin{enumerate}[(a)]
+  \item 
+    \begin{enumerate}[i.]
+      \item 
+        Let $k = 1$. Then since $x_1$ and $x_{100}$ are uncorrelated, we simply pick our feature as the feature which contributes more to the signal, namely $x_100$. 
+        Our predictor is then 
+        \[h_w(x) = a x_{100}\]
+        And we pick $a = \frac{3}{\sqrt{10}}$.
+        Our error is then:
+        \[L_D(h_w) = E[x_1^2/10] = \frac{1}{10}\Var(x_1) = \frac{1}{10}\]
+
+        For $k = 2$ and above, we simply pick $x_1$ and $x_{100}$ as our features, $w = \frac{3}{\sqrt{10}} e_{100} + \frac{1}{\sqrt{10}} e_1$. 
+        We get zero loss. 
+    \end{enumerate}
+\end{enumerate}
+\subsection{Boosting as Coordinate Descent}
+\end{document}
