@@ -273,7 +273,127 @@ Solutions by {\bf Andrew Lys} \qquad   %% <-- your name here ***
         This is still (obviously) worse than the target of $0.01$. 
         Therefore, the only $k$ for which we get loss lower than $0.01$ is $k = 100$, in which we finally are able to select $x_1$ and $x_2$, and we let $w = -10^4e_1 + 10^4 e_2$.
         As shown above, this achieves zero loss.
+      \item 
+        We can write the loss function as follows:
+        \begin{align*}
+          L_D(h_w) &= E\left[\left(z_2 - w_1 z_1 - w_2 z_1 - w_2 10^{-4} z_2 - 10^{-3}\sum_{k = 3}^{100} w_k z_k\right)^2\right]\\
+          &= \Var \left[ \left( 1 - 10^{-4} w_2 - 10^{-3}\sum_{k = 3}^{100} w_k\right) z_2 - (w_1 + w_2) z_1 - \sum_{k = 3}^{100} w_k z_k\right]\\
+          &= \left(1 - 10^{-4} w_2 - 10^{-3}\sum_{k = 3}^{100} w_k\right)^2 + (w_1 + w_2)^2 + \sum_{k = 3}^{100} w_k^2\\
+        \end{align*} 
+        Notice that for $k > 2$, each of the $w_k$'s contribute the same to decreasing the loss, and for increasing the $\ell^1$ norm of $w$. 
+        Therefore, without loss of generality, we can assume that they are all equal. 
+        Let $w_1 = x$, $w_2 = y$, and $w_3 = z$. Then we have the following 
+        \begin{align*}
+          L_D(h_w) &= \left(1 - 10^{-4} y - 10^{-3}98 z\right)^2 + (x + y)^2 + 98 z^2\\
+        \end{align*}
+        We set up the following Lagrangian:
+        \begin{align*}
+          \mathcal{L}(x, y, z, \lambda) &= \left(1 - 10^{-4} y - 10^{-3}98 z\right)^2 + (x + y)^2 + 98 z^2 - \lambda(|x| + |y| + 98|z| - B)
+        \end{align*}
+        In order to find the optimal point, we have to investigate all $8$ cases for the signs of $x, y, z$. 
+        However, we can do some simplification. Notice that the loss is minimized when $x$ is the opposite sign as $y$, since the term
+        \[(x + y)^2\]
+        is minimized when $x$ and $y$ are opposite signs.
+        Additionally, the only time when $z$ decreases the loss is when $z$ is positive. 
+        Similarly, the only time that $y$ minimizes the loss is when $y$ is positive. Therefore, we really only have one case to consider: that is when $x$ is negative, $y$ is positive, and $z$ is positive.
+        Thus, we have the following Lagrangian:
+        \begin{align*}
+          \mathcal{L}(x, y, z, \lambda) &= \left(1 - 10^{-4} y - 10^{-3}98 z\right)^2 + (x + y)^2 + 98 z^2 - \lambda(-x + y + 98z - B)
+        \end{align*}
+        We can solve this system of equations to get the solutions, but another way we can think about this is that when $B > 2 \cdot 10^{4}$, we have zero loss, since we can select $w_1 = -10^{4}$ and $w_2 = 10^{4}$
+        When $B < 2 \cdot 10^{4}$, we still want to select $w_1 = -w_2$, since this minimizes the loss, because we get an unbiased estimate of $z_2$.
+        When we select $w_1 = -w_2$ as our only features, we have the following loss:
+        \begin{align*}
+          L_D(h_w) &= \left(1 - 10^{-4} y\right)^2\\
+        \end{align*}
+        And since 
+        \begin{align*}
+          2|y| &\le B
+        \end{align*}
+        We can manage zero loss as long as $1 - 10^{-4}y = 0$ is feasible, and this occurs when $B > 2 \cdot 10^{4}$.
+
+        When $B < 2 \cdot 10^{4}$ and we keep the same features, we have the following loss:
+        \begin{align*}
+          L_D(h_w) &= \left(1 - 10^{-4} y\right)^2\\
+          &= \left(1 - 10^{-4} \frac{B}{2}\right)^2\\
+        \end{align*}
+        If we select any $x_i$, $i > 2$, we we have the following problem:
+        \begin{align*}
+          L_D(h_w) &= \left(1 - 10^{-3}z\right)^2 + z^2\\
+          B &\ge |z|\\
+        \end{align*}
+        This is minimized always at $z = \frac{10^3}{10^7 + 1}$, and we get the loss $\frac{1}{1 + 10^{-7}}$. However, for $B < 2 \cdot 10^{4}$, in the other case we get that the loss is always less than $1$. 
+        The only time when we get loss less than $0.01$ is when $B > 9000$, and we select $x_1$ and $x_2$ as our features. 
+      \item
+        We compute the various correlation coefficients. First, notice that:
+        \begin{align*}
+          \Var(y) &= \Var(z_2) = 1\\
+          \Var(x_1) &= \Var(z_1) = 1\\
+          \Var(x_2) &= \Var(z_1 + 10^{-4} z_2) = 1 + 10^{-8}\\
+          \Var(x_i) &= \Var(z_i + 10^{-3} z_2) = 1 + 10^{-6}
+        \end{align*}
+        Therefore, we have:
+        \begin{align*}
+          \rho_1 &= \frac{E[x_1 y]}{\sqrt{\Var(x_1) \Var(y)}} = \Cov(x_1, y)\\
+          &= \Cov(z_1, z_2) = 0\\
+          \rho_2 &= \frac{E[x_2 y]}{\sqrt{\Var(x_2) \Var(y)}} = \frac{\Cov(x_2, y)}{\sqrt{1 + 10^{-8}}}\\
+          &= \frac{\Cov(z_1 + 10^{-4} z_2, z_2)}{\sqrt{1 + 10^{-8}}}\\
+          &= \frac{10^{-4}}{\sqrt{1 + 10^{-8}}}\\
+          \rho_i &= \frac{E[x_i y]}{\sqrt{\Var(x_i) \Var(y)}} = \frac{\Cov(x_i, y)}{\sqrt{1 + 10^{-6}}}\\
+          &= \frac{\Cov(z_i + 10^{-3} z_2, z_2)}{\sqrt{1 + 10^{-6}}}\\
+          &= \frac{10^{-3}}{\sqrt{1 + 10^{-6}}}
+        \end{align*}
+        Therefore, for $k < 99$ we will always choose $x_3, \ldots, x_{100}$ as our features, since they have the highest correlation with $y$.
+        As before, we have to wait until $k = 99$ to select $x_2$, and we have to wait until $k = 100$ to select $x_1$.
+
+        Therefore, we have the same loss as in part (b), and so we have to wait until $k = 100$ to get loss less than $0.01$.
     \end{enumerate}
 \end{enumerate}
 \subsection{Boosting as Coordinate Descent}
+\begin{enumerate}[(a)]
+  \item 
+    We can write the loss as follows:
+    \begin{align*}
+      L_{D^{(t+1)}}(h_t) &= \sum_{i = 1}^{m} D_i^{(t+1)} [[y_i \neq h_t(x_i)]]\\
+      &= \frac{\sum_{i = 1}^{m} D_i^{(t)}\exp(\alpha_t)[[y_i \neq h_t(x_i)]]}{\sum_{j=1}^{m} D_j^{(t)}\exp(-\alpha_t y_j h_t(x_j))}\\
+      &= \frac{\sum_{i=1}^{m} \sqrt{\frac{1 - \epsilon_t}{\epsilon_t}}[[y_i \neq h_t(x_i)]]}{\sum_{j=1}^{m} D_j^{(t)}\exp(-\alpha_t y_j h_t(x_j))}\\
+      &= \frac{\sum_{i=1}^{m}\sqrt{\frac{1 - \epsilon_t}{\epsilon_t}}[[y_i \neq h_t(x_i)]]}{\sum_{j=1}^{m} \sqrt{\frac{1 - \epsilon_t}{\epsilon_t}}[[y_j \neq h_t(x_j)]] + \sqrt{\frac{\epsilon_t}{1 - \epsilon_t}}[[y_j = h_t(x_j)]]}\\
+      &= \frac{1}{1 + \frac{\sum_{j=1}^{m} \sqrt{\frac{\epsilon_t}{1 - \epsilon_t}}[[y_j = h_t(x_j)]]}{\sum_{i = 1}^{m} \sqrt{\frac{1 - \epsilon_t}{\epsilon_t}}[[y_i \neq h_t(x_i)]]}}\\
+      \frac{\sum_{j=1}^{m} \sqrt{\frac{\epsilon_t}{1 - \epsilon_t}}[[y_j = h_t(x_j)]]}{\sum_{i = 1}^{m} \sqrt{\frac{1 - \epsilon_t}{\epsilon_t}}[[y_i \neq h_t(x_i)]]} &= \frac{(1 - \epsilon_t) \cdot m \sqrt{\frac{\epsilon_t}{1 - \epsilon_t}}}{\epsilon_t \cdot m \sqrt{\frac{1 - \epsilon_t}{\epsilon_t}}}\\
+      &= \frac{1-\epsilon_t}{\epsilon_t} \cdot \sqrt{\frac{\epsilon_t}{1 - \epsilon_t}}^2 = 1
+    \end{align*}
+    Therefore, 
+    \[L_{D^{(t+1)}}(h_t) = \frac{1}{2}\]
+  \item
+    Let $h_t[h] := h\sum_{k \le t | h_k = h} \alpha_k$
+    \begin{align*}
+      \frac{\partial L_S^{exp}}{\partial w[h]}(h_{w^{(t)}}) &= \frac{\partial}{\partial w[h]} \frac{1}{m} \sum_{i = 1}^{m} \exp(-y_i h_{w^{(t)}}(x_i))\\
+      &= \frac{1}{m} \sum_{i = 1}^{m} \exp(-y_i h_{w^{(t)}}(x_i)) \left(-y_i \frac{\partial h_{w^{(t)}}(x_i)}{\partial w[h]}\right)\\
+      &= -\frac{1}{m} \sum_{i = 1}^{m} \exp(-y_i h_{w^{(t)}}(x_i))y_i h_t[h](x_i)\\
+      &= -\frac{1}{m} \sum_{i=1}^{m} \exp\left(-y_i \sum_{k = 1}^{t-1} \alpha_k h_k(x_i)\right) y_i h_t[h](x_i)\\
+      &= -\frac{1}{m} \sum_{i = 1}^{m} \prod_{k = 1}^{t-1}\exp(-y_i \alpha_k h_k(x_i)) y_i h_t[h](x_i)\\
+    \end{align*}
+    Recall the definition of $D_i^{(t)}$:
+    \begin{align*}
+      D_i^{(t)} &= \frac{D_{i}^{(t-1)}\exp(-y_i \alpha_t h_t(x_i))}{\sum_{j = 1}^{m}D_j^{(t-1)}\exp(-\alpha_ty_jh_t(x_j))}\\
+      &= \frac{D_i^{(t-1)}\exp(-y_i\alpha_t h_t(x_i))}{C^{(t-1)}}\\
+      D_i^{(t)} \prod_{k = 1}^{t-1} C^{(k)}&= \prod_{k=1}^{t-1}D^{(1)}\exp(-y_i\alpha_k h_k(x_i)) = \frac{1}{m}\prod_{k=1}^{t-1}\exp(-y_i\alpha_k h_k(x_i))\\
+    \end{align*}
+    Therefore, writing $\prod_{k=1}^{t-1} C^{(k)} = C_t$, we have:
+    \begin{align*}
+      \frac{\partial L_S^{exp}}{\partial w[h]}(h_{w^{(t)}}) &= -C_t \sum_{i=1}^{m} D_i^{(t)} (y_i h_t[h](x_i))\\
+    \end{align*}
+    We then have:
+    \begin{align*}
+      \sum_{i = 1}^{m} D_i^{(t)} y_i h_t[h](x_i) &= \sum_{i = 1}^{m} D_i^{(t)} ([[y_i = h_t(x_i)]] - [[y_i \neq h_t(x_i)]])\\
+      \sum_{i = 1}^{m} D_i^{(t)} y_i h_t[h](x_i) &= \sum_{i = 1}^{m} D_i^{(t)} (1 - 2[[y_i \neq h_t(x_i)]])\\
+      &= 1 - 2 L_{D^{(t)}}(h_t[h])\\
+    \end{align*}
+    Therefore, we have:
+    \begin{align*}
+      \frac{\partial L_S^{exp}}{\partial w[h]}(h_{w^{(t)}}) &= C_t (2 L_{D^{(t)}}(h_t[h]) - 1)\\
+      &= 2C_t(L_{D^{(t)}}(h_t[h]) - \frac{1}{2})\\
+      &\propto L_{D^{(t)}}(h_t[h]) - \frac{1}{2}
+    \end{align*}
+  \end{enumerate}
 \end{document}
