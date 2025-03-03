@@ -47,6 +47,7 @@
 \DeclareMathOperator{\Cov}{Cov}
 \DeclareMathOperator{\Tr}{Tr}
 \DeclareMathOperator{\Diag}{Diag}
+\DeclareMathOperator{\sign}{sign}
 \newtheorem{theorem}{Theorem}
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}
@@ -225,5 +226,27 @@ Solutions by {\bf Andrew Lys} \qquad   %% <-- your name here ***
       \begin{align*}
         \nabla_{W^{(1)}} \ell^{sq} (\hat{y}, y) &= (\hat{y} - y) x \left(\sigma_s(a[v])^\top + a[v]^\top J \sigma_s(a[v]) \right) W^{(2)} \Diag(\sigma(W^{(1)}x)(1 - \sigma(W^{(1)}x)))\\
       \end{align*}
+\end{enumerate}
+\subsection{Multiclass and Structured Prediction}
+\begin{enumerate}
+  \item 
+    We have:
+    \begin{align*}
+      h_w(x) &= \arg\max_{y \in \{\pm 1\}} \left\langle w, \frac{1}{2} y\phi(x) \right\rangle \\
+      \langle w, \phi(x) \rangle > 0 &\implies h_w(x) = 1 \\
+      \langle w, \phi(x) \rangle < 0 &\implies h_w(x) = -1 \\
+      \therefore \qquad h_w(x) &= \sign(\langle w, \phi(x) \rangle)
+    \end{align*}
+    Recall the binary hinge loss:
+    \[\ell^{hinge}(h(x), y) = [1 - yh(x)]_+\]
+    In the binary case of multiclass prediction, we have:
+    \begin{align*}
+      \ell^{hinge}(w, (x,y)) &= \max_{y' \in \{\pm 1\}} \left([[y' \neq y]] + \frac12 y' \langle w, \phi(x) \rangle - \frac12 y \langle w, \phi(x) \rangle\right)\\
+      y' \neq y &\implies[[y' \neq y]] + \frac12 y' \langle w, \phi(x) \rangle - \frac12 y \langle w, \phi(x) \rangle  = 1 + \frac12 (-y) \langle w, \phi(x) \rangle  - \frac{1}{2} y \langle w, \phi(x) \rangle\\
+      &= 1 - y \langle w, \phi(x) \rangle = 1 - y h_w(x)\\
+      y = y & \implies [[y' \neq y]] + \frac12 y' \langle w, \phi(x) \rangle - \frac12 y \langle w, \phi(x) \rangle = 0 \\
+      \therefore \qquad \ell^{hinge}(w, (x,y)) &= \max(0, 1 - y h_w(x)) = [1 - y h_w(x)]_+
+    \end{align*}
+
 \end{enumerate}
 \end{document}
