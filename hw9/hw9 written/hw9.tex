@@ -45,6 +45,8 @@
 \DeclareMathOperator{\Aut}{Aut}
 \DeclareMathOperator{\Sym}{Sym}
 \DeclareMathOperator{\Cov}{Cov}
+\DeclareMathOperator{\Tr}{Tr}
+\DeclareMathOperator{\Diag}{Diag}
 \newtheorem{theorem}{Theorem}
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}
@@ -170,5 +172,58 @@ Solutions by {\bf Andrew Lys} \qquad   %% <-- your name here ***
           &= \sum_{v_p \in \text{parents}(v)} \left(\sigma_s(a[v_{out}]) \cdot w(v_p, v_{out}) + a[v_{out}] J \sigma_s(a[v_{out}]) w(v_p, v_{out})\right) \gamma^{(v_p)}[v]
         \end{align*}
       \end{enumerate}
+  \item
+      Let $o[x] = x$. Let $u$ be the children of $x$, and let $a[u][i] = W^{(1)}x$. Then $\sigma(a[u]) = o[u]$.
+      Let $v$ be an additional implied layer between $\hat{y}$ and $u$. Let $a[v] = W^{(2)}o[u]$ and $o[v] = a[v]$. 
+      Then $\hat{y} = \sigma_s(a[v]) \cdot a[v]$. With this notation we have:
+      \begin{align*}
+        \nabla_{W^{(2)}} \ell^{sq} (\hat{y}, y) &= \nabla_{W^{(2)}} \frac{1}{2}(\hat{y} - y)^2 \\
+        &= (\hat{y} - y) \nabla_{W^{(2)}} \hat{y}\\
+        d \hat{y} &=  d(\sigma_s(a[v])^\top a[v]) \\
+        &= \sigma_s(W^{(2)}o[u])^\top d(W^{(2)}o[u]) + d \sigma_s(W^{(2)}o[u])^\top(W^{(2)}o[u])\\
+        &= \sigma_s(W^{(2)}o[u])^\top dW^{(2)}o[u] + (W^{(2)}o[u])^\top J\sigma_s(W^{(2)}o[u]) d(W^{(2)}o[u])\\
+        &= \Tr(\sigma_s(W^{(2)}o[u])^\top dW^{(2)}o[u]) + \Tr(o[u]^\top W^{(2)\top} J\sigma_s(W^{(2)}o[u]) dW^{(2)}o[u])\\
+        &= \Tr(o[u] \sigma_s(W^{(2)}o[u])^\top dW^{(2)}) + \Tr(o[u]o[u]^\top W^{(2)\top} J\sigma_s(W^{(2)}o[u]) dW^{(2)})\\
+        \implies \frac{d \hat{y}}{d W^{(2)}} &= o[u] \sigma_s(W^{(2)}o[u])^\top + o[u]o[u]^\top W^{(2)\top} J\sigma_s(W^{(2)}o[u])\\
+        \implies \nabla_{W^{(2)}} \ell^{sq} (\hat{y}, y) &= (\hat{y} - y) \left[o[u] \sigma_s(W^{(2)}o[u])^\top +  o[u]o[u]^\top W^{(2)\top} J\sigma_s(W^{(2)}o[u])\right]\\
+        &= (\hat{y} - y) \left(o[u] \sigma_s(a[v])^\top +  o[u]a[v]^\top J\sigma_s(a[v])\right)
+      \end{align*}
+      Where $J \sigma_s(a[v])$ is the Jacobian of the softmax function evaluated at $a[v]$. For completeness, we have:
+      \begin{align*}
+        J \sigma_s(z) &= \begin{bmatrix}
+          \sigma_s(z)[1](1 - \sigma_s(z)[1]) & -\sigma_s(z)[1]\sigma_s(z)[2] & \ldots & -\sigma_s(z)[1]\sigma_s(z)[n] \\
+          -\sigma_s(z)[2]\sigma_s(z)[1] & \sigma_s(z)[2](1 - \sigma_s(z)[2]) & \ldots & -\sigma_s(z)[2]\sigma_s(z)[n] \\
+          \vdots & \vdots & \ddots & \vdots \\
+          -\sigma_s(z)[n]\sigma_s(z)[1] & -\sigma_s(z)[n]\sigma_s(z)[2] & \ldots & \sigma_s(z)[n](1 - \sigma_s(z)[n]) \\
+        \end{bmatrix}\\
+        &= I \sigma_s(z) - \sigma_s(z) \sigma_s(z)^T
+      \end{align*}
+      This gives us:
+      \begin{align*}
+        \nabla_{W^{(2)}} \ell^{sq} (\hat{y}, y) &= (\hat{y} - y) \left[o[u] \sigma_s(a[v])^\top +  o[u]a[v]^\top (I \sigma_s(a[v]) - \sigma_s(a[v]) \sigma_s(a[v])^\top)\right]\\
+        &= (\hat{y} - y) \left[o[u] \sigma_s(a[v])^\top +  o[u]a[v]^\top \sigma_s(a[v]) - o[u]a[v]^\top \sigma_s(a[v]) \sigma_s(a[v])^\top\right]
+      \end{align*}
+      Now we calculate $\nabla_{W^{(1)}} \ell^{sq} (\hat{y}, y)$.
+      \begin{align*}
+        \nabla_{W^{(1)}} \ell^{sq} (\hat{y}, y) &= \nabla_{W^{(1)}} \frac{1}{2}(\hat{y} - y)^2 \\
+        &= (\hat{y} - y) \nabla_{W^{(1)}} \hat{y}\\
+        d \hat{y} &=  d(\sigma_s(a[v])^\top a[v]) \\
+        &= \sigma_s(a[v])^\top d(W^{(2)}o[u]) + a[v]^\top d \sigma_s(W^{(2)}o[u]) \\
+        &= \sigma_s(a[v])^\top W^{(2)} d o[u] + a[v]^\top J \sigma_s(W^{(2)}o[u]) d(W^{(2)}o[u]) \\
+        &= \sigma_s(a[v])^\top W^{(2)} d \sigma(W^{(1)}x) + a[v]^\top J \sigma_s(a[v]) W^{(2)} d \sigma(W^{(1)}x) \\
+        d\sigma(W^{(1)}x) &= \sigma'(W^{(1)}x) \odot dW^{(1)}x \\
+        &= (\sigma(W^{(1)}x)(1 - \sigma(W^{(1)}x))) \odot dW^{(1)}x \\
+        &= \Diag(\sigma(W^{(1)}x)(1 - \sigma(W^{(1)}x))) dW^{(1)}x \\
+        \implies d\hat{y} &= \sigma_s(a[v])^\top W^{(2)} \Diag(\sigma(W^{(1)}x)(1 - \sigma(W^{(1)}x))) dW^{(1)}x\\
+        &+ a[v]^\top J \sigma_s(a[v]) W^{(2)} \Diag(\sigma(W^{(1)}x)(1 - \sigma(W^{(1)}x))) dW^{(1)}x \\
+        &= \Tr\left[\left(\sigma_s(a[v])^\top + a[v]^\top J \sigma_s(a[v]) \right) W^{(2)} \Diag(\sigma(W^{(1)}x)(1 - \sigma(W^{(1)}x)))dW^{(1)}x\right] \\
+        &= \Tr\left[x \left(\sigma_s(a[v])^\top + a[v]^\top J \sigma_s(a[v]) \right) W^{(2)} \Diag(\sigma(W^{(1)}x)(1 - \sigma(W^{(1)}x)))dW^{(1)}\right] \\
+        \implies \frac{d \hat{y}}{d W^{(1)}} &= x \left(\sigma_s(a[v])^\top + a[v]^\top J \sigma_s(a[v]) \right) W^{(2)} \Diag(\sigma(W^{(1)}x)(1 - \sigma(W^{(1)}x)))\\
+      \end{align*}
+      Keep in mind that $\sigma$ is taken element wise in the above calculations, and we should have $\odot$ for element wise multiplication between $\sigma(W^{(1)}x)$ and $(1 - \sigma(W^{(1)}x))$ inside the $\Diag$ operator, but the meaning is clear regardless. 
+      We then get the final result:
+      \begin{align*}
+        \nabla_{W^{(1)}} \ell^{sq} (\hat{y}, y) &= (\hat{y} - y) x \left(\sigma_s(a[v])^\top + a[v]^\top J \sigma_s(a[v]) \right) W^{(2)} \Diag(\sigma(W^{(1)}x)(1 - \sigma(W^{(1)}x)))\\
+      \end{align*}
 \end{enumerate}
 \end{document}
