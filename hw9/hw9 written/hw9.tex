@@ -228,7 +228,7 @@ Solutions by {\bf Andrew Lys} \qquad   %% <-- your name here ***
       \end{align*}
 \end{enumerate}
 \subsection{Multiclass and Structured Prediction}
-\begin{enumerate}
+\begin{enumerate}[(a)]
   \item 
     We have:
     \begin{align*}
@@ -247,6 +247,120 @@ Solutions by {\bf Andrew Lys} \qquad   %% <-- your name here ***
       y = y & \implies [[y' \neq y]] + \frac12 y' \langle w, \phi(x) \rangle - \frac12 y \langle w, \phi(x) \rangle = 0 \\
       \therefore \qquad \ell^{hinge}(w, (x,y)) &= \max(0, 1 - y h_w(x)) = [1 - y h_w(x)]_+
     \end{align*}
-
+  \item
+    \begin{enumerate}[(i)]
+      \item 
+        First we show that $L_S^{hinge}$ is convex in $w$. We show that for every $(x,y)$, $\ell^{hinge}(w, (x,y))$ is convex in $w$. 
+        Let $u$, $v \in \rr^d$ and let $\lambda \in [0,1]$. Then we have:
+        \begin{align*}
+          \ell^{hinge}(\lambda u + (1-\lambda)v, (x,y)) &= \max_{y' \in \mathcal{Y}} (\Delta(y', y) + \langle \lambda u + (1-\lambda)v, \Psi(x, y') \rangle - \langle \lambda u + (1-\lambda)v , \Psi(x, y) \rangle)\\
+          &= \max_{y' \in \mathcal{Y}} \left[ \lambda (\Delta(y', y) + \langle u, \Psi(x, y') \rangle - \langle u, \Psi(x, y) \rangle) + (1-\lambda)(\Delta(y', y) + \langle v, \Psi(x, y') \rangle - \langle v, \Psi(x, y) \rangle)\right]\\
+          &\le \lambda \max_{y' \in \mathcal{Y}} (\Delta(y', y) + \langle u, \Psi(x, y') \rangle - \langle u, \Psi(x, y) \rangle) \\
+          &+ (1-\lambda)\max_{y' \in \mathcal{Y}} (\Delta(y', y) + \langle v, \Psi(x, y') \rangle - \langle v, \Psi(x, y) \rangle)\\
+          &= \lambda \ell^{hinge}(u, (x,y)) + (1-\lambda) \ell^{hinge}(v, (x,y))
+        \end{align*} 
+        Thus, 
+      \begin{align*}
+        L^{hinge}_S(\lambda u + (1-\lambda) v) &= \frac{1}{|S|} \sum_{(x, y) \in S} \ell^{hinge}(\lambda u + (1-\lambda) v, (x,y))\\
+        &\le \lambda \frac{1}{|S|} \sum_{(x, y) \in S} \ell^{hinge}(u) + (1-\lambda) \frac{1}{|S|} \sum_{(x, y) \in S} \ell^{hinge}(v)\\
+        &= \lambda L^{hinge}_S(u) + (1-\lambda) L^{hinge}_S(v)
+      \end{align*}
+      \item
+        Notice that for all $y \in \mathcal{Y}$, by the definition of $h_w(x)$, we have:
+        \begin{align*}
+          \langle w, \Psi(x, y) \rangle & \le \langle w , \Psi(x, h_w(x)) \rangle \\
+          \implies 0 & \le \langle w , \Psi(x, h_w(x)) \rangle -\langle w, \Psi(x, y) \rangle  \\
+        \end{align*}
+        Therefore, we have:
+        \begin{align*}
+          \ell^\Delta(h_w, (x,y)) &\le \Delta(h_w(x), y) + \langle w , \Psi(x, h_w(x)) \rangle - \langle w, \Psi(x, y) \rangle \\
+          &\le \max_{y' \in \mathcal{Y}} (\Delta(y', y) + \langle w , \Psi(x, y') \rangle - \langle w, \Psi(x, y) \rangle)\\
+        \end{align*}
+        And so 
+        \begin{align*}
+          L_S^{\Delta}(w) &\le L_S^{hinge}(w)
+        \end{align*}
+      \item
+        Let $w$ such that $L_S^{\Delta}(h_w) = 0$, then for all $(x,y) \in S$, we have $\Delta(h_w(x), y) = 0$. 
+        Therefore, taking the same $w$, we have, for $(x,y) \in S$ and $\Delta(y', y) > 0$:
+        \begin{align*}
+          \langle w, \Psi(x, h_w(x)) \rangle > \langle w, \Psi(x,y') \rangle 
+        \end{align*}
+        We want an inequality as follows:
+        \begin{align}
+          \langle \tilde{w}, \Psi(x, h_{\tilde{w}}(x)) \rangle & \ge \langle \tilde{w}, \Psi(x,y') \rangle + \Delta(y', y) & \forall \Delta(y',y) > 0
+        \end{align}
+        This would imply, for $\Delta(h_{\tilde{w}}(x), y) = 0$:
+        \begin{align}
+          \ell^{hinge}(\tilde{w}, (x,y)) &= \max_{\Delta(y', y) > 0 } \left[ \Delta(y', y) + \langle \tilde{w}, \Psi(x, y') \rangle - \langle \tilde{w}, \Psi(x, y) \rangle \right] \\
+          &+ \max_{\Delta(y'', y) = 0} \left[ \langle \tilde{w}, \Psi(x, y'') \rangle - \langle \tilde{w}, \Psi(x, y) \rangle \right] 
+        \end{align}
+        We focus on the first term of the right hand side.
+        \begin{align*}
+          (2) &\le \max_{\Delta(y', y) > 0 } \left[ \langle \tilde{w}, \Psi(x, h_{\tilde{w}}(x)) \rangle - \langle \tilde{w}, \Psi(x, y) \rangle \right] \\
+          &= \langle \tilde{w}, \Psi(x, h_{\tilde{w}}(x)) \rangle - \langle \tilde{w}, \Psi(x, y) \rangle \\
+          \Delta(h_{\tilde{w}}(x), y) = 0 &\implies h_{\tilde{w}}(x) = y\\
+          \therefore \qquad (2) &\le 0
+        \end{align*}
+        Now for the second term
+        \begin{align*}
+          (3) &\le \langle \tilde{w}, \Psi(x, h_{\tilde{w}}(x)) \rangle - \langle \tilde{w}, \Psi(x, y) \rangle \\
+          &= 0
+        \end{align*}
+        Therefore, if $(1)$ holds, we have:
+        \begin{align*}
+          \ell^{hinge}(\tilde{w}, (x,y)) &= 0
+        \end{align*}
+        To make $(1)$ hold, we leverage the fact that $\mathcal{Y}$ is finite. Let
+        \begin{align*}
+          d &= \min_{\Delta(y', y) > 0} (\langle w, \Psi(x, h_w(x)) \rangle - \langle w, \Psi(x, y') \rangle)
+        \end{align*}
+        and 
+        \begin{align*}
+          D &= \max_{\Delta(y', y) > 0} \Delta(y', y)
+        \end{align*}
+        Thus, we just let 
+        \begin{align*}
+          \tilde{w} &= \frac{D + 1}{d} w
+        \end{align*} 
+        Then we have:
+        \begin{align*}
+          \langle \tilde{w}, \Psi(x, h_{\tilde{w}}(x)) \rangle - \langle \tilde{w}, \Psi(x, y') \rangle &= \frac{D + 1}{d} \left(\langle w, \Psi(x, h_w(x)) \rangle - \langle w, \Psi(x, y') \rangle\right)\\
+          &\ge D + 1 > D = \Delta(y', y)
+        \end{align*}
+        And so $(1)$ holds. Therefore, we have $L_S^{\Delta}(w) = 0 \implies L_S^{hinge}(w) = 0$.
+    \end{enumerate}
+    \item
+      Fix a sample $(x,y)$ and let
+      \begin{align*}
+        g_{y'}(w) &= \Delta(y', y) + \langle w, \Psi(x, y') \rangle - \langle w, \Psi(x, y) \rangle\\
+        g(w) &= \max_{y' \in \mathcal{Y}} g_{y'}(w)
+      \end{align*}
+      Then
+      \begin{align*}
+        \ell^{hinge}(w, (x,y)) &= g(w)
+      \end{align*}
+      Let $\nabla_w g_{y'}(w)$ be a sub-gradient of $g_{y'}$ at $w$. Let
+      \begin{align*}
+        y_0 &= \arg\max_{y' \in \mathcal{Y}} g_{y'}(w)\\
+      \end{align*}
+      Then we have, for $v \in \rr^d$:
+      \begin{align*}
+        g(v) - g(w) &= g(v) - g_{y_0}(w)\\
+        & \ge g_{y_0}(v) - g_{y_0}(w)\\
+        & \ge \nabla_w g_{y_0}(w)^\top (v - w)
+      \end{align*}
+      So $\nabla_w g_{y_0}(w)$ is a sub-gradient of $g(w)$ at $w$.
+      Since $g_{y'}$ is differentiable, its gradient is a subgradient, so we have:
+      \begin{align*}
+        \nabla_w g_{y'}(w) &= \nabla_w \Delta(y', y) + \nabla_w \langle w, \Psi(x, y') \rangle - \nabla_w \langle w, \Psi(x, y) \rangle\\
+        &= \Psi(x, y') - \Psi(x, y)
+      \end{align*}
+      Therefore, we have:
+      \begin{align*}
+        \nabla_w \ell^{hinge}(w, (x,y)) &= \nabla_w g_{y_0}(w) = \Psi(x, y_0) - \Psi(x, y)\\
+      \end{align*}
+      In order to compute the subgradient, we need to determine what $y_0$ is. Without any assumptions on $\Delta$ or $\mathcal{Y}$, we just have to iterate over $\mathcal{Y}$. 
+      Assuming that computing $\Psi(x,y)$ takes constant time, we have that computing $g_{y'}(w)$ takes $O(d)$ operations. Therefore, computing the subgradient takes $O(d|\mathcal{Y}|)$ operations.
 \end{enumerate}
 \end{document}
