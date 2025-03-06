@@ -14675,3 +14675,6 @@ hw9/hw9 written/hw9.fdb_latexmk
 hw9/hw9 written/hw9.fls
 hw9/hw9 written/hw9.log
 hw9/hw9 written/hw9.synctex.gz
+hw9/hw9 experimental/fmnist_train.npy
+.gitignore
+hw9/hw9 experimental/fmnist_test.npy
