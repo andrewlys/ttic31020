@@ -1,4 +1,5 @@
 import numpy as np
+import time
 import utils
 from conv_nn.module import Sequential
 from conv_nn.layer import Conv, batchnorm, ReLU, maxpool, Dropout, flatten, Linear
@@ -55,8 +56,9 @@ if __name__ == '__main__':
     }
 
     # Fit model
+    t = time.time()
     cnn_clf.fit(Xfm_train[:10000], yfm_train[:10000], **sgd_kwargs)
-
+    print(f'Time taken to fit: {time.time() - t}')
     # Evaluate model
     print(f"Validation Error: {utils.empirical_err(yfm_val, cnn_clf.predict(Xfm_val))}")
     y_test_preds = cnn_clf.predict(X_test)
