@@ -59,8 +59,9 @@ class Linear(Module):
         assert grad_output.shape[1] == self.weight.shape[1]
 
         #### TASK 2 CODE
+        m = self._input.shape[0]
         self._grad_output = grad_output
-        self._grad_weight = np.mean(grad_output[:, :, np.newaxis] * self._input[:, np.newaxis, :], axis = 0).T #  (grad_output \otimes x) averaged over the samples
+        self._grad_weight = (self._input.T @ grad_output)/m #  (grad_output \otimes x) averaged over the samples
         self._grad_bias = np.mean(grad_output, axis = 0)
         self._grad_input = grad_output @ self.weight.T
         #### TASK 2 CODE
