@@ -14678,3 +14678,5 @@ hw9/hw9 written/hw9.synctex.gz
 hw9/hw9 experimental/fmnist_train.npy
 .gitignore
 hw9/hw9 experimental/fmnist_test.npy
+hw9/hw9 experimental/conv_nn/fmnist_test.npy
+hw9/hw9 experimental/conv_nn/fmnist_train.npy
