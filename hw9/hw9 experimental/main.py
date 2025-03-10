@@ -1,15 +1,15 @@
-from typing import Tuple, List, Optional
 import numpy as np
 import utils
-from .module import Sequential
-from .layer import Conv, batchnorm, ReLU, maxpool, Dropout, flatten, Linear
-from .loss import MultiLogisticLoss
-from .nn import ERMNeuralNetClassifier
+from conv_nn.module import Sequential
+from conv_nn.layer import Conv, batchnorm, ReLU, maxpool, Dropout, flatten, Linear
+from conv_nn.loss import MultiLogisticLoss
+from conv_nn.nn import ERMNeuralNetClassifier
 
 SEED = 0
 np.random.seed(SEED)
 
 if __name__ == '__main__':
+    print("Running main.py")
     train_data = np.load('fmnist_train.npy', allow_pickle=True).item()
     test_data = np.load('fmnist_test.npy', allow_pickle=True).item()
 
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     cnn_clf = ERMNeuralNetClassifier(model, loss)
     sgd_kwargs = {
         'batch_size': 128,
-        'n_epochs': 5,
+        'n_epochs': 3,
         'eta': 0.01,
         'verbose': True, # Enable printing INSIDE SGD
         'verbose_epoch_interval': 1,
