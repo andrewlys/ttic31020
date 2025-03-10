@@ -48,18 +48,18 @@ if __name__ == '__main__':
     cnn_clf = ERMNeuralNetClassifier(model, loss)
     sgd_kwargs = {
         'batch_size': 128,
-        'n_epochs': 3,
+        'n_epochs': 1,
         'eta': 0.01,
         'verbose': True, # Enable printing INSIDE SGD
         'verbose_epoch_interval': 1,
     }
 
     # Fit model
-    cnn_clf.fit(Xfm_train, yfm_train, **sgd_kwargs)
+    cnn_clf.fit(Xfm_train[:10000], yfm_train[:10000], **sgd_kwargs)
 
     # Evaluate model
     print(f"Validation Error: {utils.empirical_err(yfm_val, cnn_clf.predict(Xfm_val))}")
     y_test_preds = cnn_clf.predict(X_test)
-    fname = '/content/fmnist_test_pred.csv'
+    fname = 'fmnist_test_pred.csv'
     output = np.vstack((np.arange(y_test_preds.shape[0]), y_test_preds)).T
     np.savetxt(fname, output, fmt="%d", delimiter=',', comments='', header='id,label')

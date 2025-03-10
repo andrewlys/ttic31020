@@ -2,6 +2,20 @@ import numpy as np
 SEED = 0
 np.random.seed(SEED)
 
+def pad(image: np.ndarray, padding: int) -> np.ndarray:
+    '''
+    Pad image with zeros
+    Args:
+        image: 4D array of shape (m, h, w, c)
+        padding: int. Number of zeros to pad with
+    Returns:
+        4D array of shape (m, h + 2*padding, w + 2*padding, c)
+    '''
+    m, h, w, c = image.shape
+    res = np.zeros((m, h + 2*padding, w + 2*padding, c))
+    res[:, padding:h+padding, padding:w+padding, :] = image
+    return res
+
 def Convolve(image: np.ndarray, kernel: np.ndarray, stride: int, padding: int):
     '''
     Convolve batch of layers of 2D image/array with kernel. 
@@ -23,13 +37,13 @@ def Convolve(image: np.ndarray, kernel: np.ndarray, stride: int, padding: int):
     h_out = (h - k_h + 2*padding) // stride + 1
     w_out = (w - k_w + 2*padding) // stride + 1
     # pad image
-    pad_image = np.pad(image, ((0, 0), (padding, padding), (padding, padding), (0,0)), mode='constant', constant_values=0)
+    pad_image = pad(image, padding)
     # evil vectorized code
     m_str, h_str, w_str, c_str = pad_image.strides
     dil_shape = (m, h_out, w_out, k_h, k_w, c_i)
     dil_strides = (m_str, h_str * stride, w_str * stride, h_str, w_str, c_str)
     dil_image = np.lib.stride_tricks.as_strided(pad_image, dil_shape, dil_strides)
-    return np.einsum('mhwkdc,okdc->mhwo', dil_image, kernel)
+    return np.einsum('mhwkdc,okdc->mhwo', dil_image, kernel, optimize=True)
 
 def interweave_with_zeros(arr: np.ndarray, n: int) -> np.ndarray:
     '''

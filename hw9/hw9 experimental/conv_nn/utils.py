@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Callable, List, Optional, Tuple, Union
+import concurrent.futures
+import os
 
 import matplotlib as mpl
 from matplotlib.colors import ListedColormap
@@ -120,12 +122,16 @@ def SGD(
         n_batches = m // batch_size
         batch_idxs = np.array_split(shuffle_idxs, n_batches)
         
-        # Train on mini batch
-        for b in range(n_batches):
-            b_idxs = batch_idxs[b] # the samples to use in this minibatch
-            
-            g = grad_calculator(w, b_idxs) # the stochastic gradient estimate
-            w = w - eta * g # gradient step
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            # Train on mini batch
+            for b in range(n_batches):
+                b_idxs = batch_idxs[b] # the samples to use in this minibatch
+                futures = {
+                    executor.submit(grad_calculator, w, b_idxs): mini_b_idxs for mini_b_idxs in np.array_split(b_idxs, 16)
+                }
+                for future in concurrent.futures.as_completed(futures):
+                    g = future.result() * len(futures[future]) / len(b_idxs)
+                    w = w - eta * g # gradient step
         
         # Log per epoch loggers
         for logger in loggers:
