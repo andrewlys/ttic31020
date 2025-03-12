@@ -1,6 +1,6 @@
 import numpy as np
 import time
-import utils
+from conv_nn import utils
 from conv_nn.module import Sequential
 from conv_nn.layer import Conv, batchnorm, ReLU, maxpool, Dropout, flatten, Linear
 from conv_nn.loss import MultiLogisticLoss
@@ -30,20 +30,18 @@ if __name__ == '__main__':
 
     # Create model
     model = Sequential([
-        Conv(1, 16, 5, 1, 2), 
-        batchnorm(16),
-        ReLU(),
-        maxpool(2, 2), # 14 x 14 x 16
-        Dropout(0.1),
-        Conv(16, 32, 5, 1, 2),
+        Conv(1, 32, 3, 1, 1), 
         batchnorm(32),
         ReLU(),
-        maxpool(2, 2), # 7 x 7 x 32
-        Dropout(0.1),
+        maxpool(2, 2), # 14 x 14 x 32 
+        Conv(32, 64, 3, 1, 1),
+        batchnorm(64),
+        ReLU(),
+        maxpool(2, 2), # 7 x 7 x 64 
         flatten(),
-        Linear(7*7*32, 128),
+        Linear(7*7*64, 256),
         Dropout(0.5),
-        Linear(128, 10)
+        Linear(256, 10)
     ])
     loss = MultiLogisticLoss(k=10)
     cnn_clf = ERMNeuralNetClassifier(model, loss)
@@ -54,10 +52,9 @@ if __name__ == '__main__':
         'verbose': True, # Enable printing INSIDE SGD
         'verbose_epoch_interval': 1,
     }
-
     # Fit model
     t = time.time()
-    cnn_clf.fit(Xfm_train[:10000], yfm_train[:10000], **sgd_kwargs)
+    cnn_clf.fit(Xfm_train, yfm_train, **sgd_kwargs)
     print(f'Time taken to fit: {time.time() - t}')
     # Evaluate model
     print(f"Validation Error: {utils.empirical_err(yfm_val, cnn_clf.predict(Xfm_val))}")

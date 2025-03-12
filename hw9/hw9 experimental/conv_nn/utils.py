@@ -3,6 +3,7 @@ from typing import Any, Callable, List, Optional, Tuple, Union
 import concurrent.futures
 import multiprocessing
 import os
+import gc
 
 import matplotlib as mpl
 from matplotlib.colors import ListedColormap
@@ -117,58 +118,53 @@ def SGD(
         shared['w'] = w
         shared['lock'] = manager.Lock()
         
-        with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
-            for epoch in range(n_epochs):
-                if sampling == 'epoch_shuffle':
-                    # Sample without replacements each epoch,
-                    # i.e. use an independently sampled permutation each round
-                    shuffle_idxs = np.random.permutation(m)
-                elif sampling == 'iid':
-                    # iid sampling, as in SGD theory
-                    shuffle_idxs = np.random.randint(0, high=m, size=m)
-                n_batches = m // batch_size
-                batch_idxs = np.array_split(shuffle_idxs, n_batches)
-                
-                # Train on mini batch
-                futures = [
-                    executor.submit(grad_calculator, shared['w'], b_idxs) for b_idxs in batch_idxs
-                ]
-                    # b_idxs = batch_idxs[b] # the samples to use in this minibatch
-                for future in concurrent.futures.as_completed(futures):
-                    g = future.result()
-                    with shared['lock']:
-                        shared['w'] = shared['w'] - eta * g
-                    # g = grad_calculator(w, b_idxs) 
-                    # w = w - eta * g # gradient step
-                
-                # Log per epoch loggers
+        for epoch in range(n_epochs):
+            if sampling == 'epoch_shuffle':
+                # Sample without replacements each epoch,
+                # i.e. use an independently sampled permutation each round
+                shuffle_idxs = np.random.permutation(m)
+            elif sampling == 'iid':
+                # iid sampling, as in SGD theory
+                shuffle_idxs = np.random.randint(0, high=m, size=m)
+            n_batches = m // batch_size
+            batch_idxs = np.array_split(shuffle_idxs, n_batches)
+            for i in range(-(n_batches // - 4)): # ceil divide hack
+                with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
+                    # Train on mini batch
+                    futures = [
+                        executor.submit(grad_calculator, shared['w'], b_idxs) for b_idxs in batch_idxs[i*4:(i+1)*4]
+                    ]
+                    for future in concurrent.futures.as_completed(futures):
+                        g = future.result()
+                        with shared['lock']:
+                            shared['w'] = shared['w'] - eta * g
+            w = shared['w']
+            gc.collect()
+            # Log per epoch loggers
+            for logger in loggers:
+                if logger.per_epoch:
+                    logger.log.append(logger.logging_func(w))
+            if verbose and (epoch % verbose_epoch_interval == 0):
+                if epoch == 0:
+                    print()
+                s = [f'--- Epoch: {epoch}']
                 for logger in loggers:
-                    if logger.per_epoch:
-                        logger.log.append(logger.logging_func(w))
-                if verbose and (epoch % verbose_epoch_interval == 0):
-                    if epoch == 0:
-                        print()
-                    s = [f'--- Epoch: {epoch}']
-                    for logger in loggers:
-                        if logger.can_display and logger.per_epoch:
-                            s.append(f'{logger.name}: {logger.log[-1]:5}')
-                    if len(s) > 1:
-                        print(', '.join(s))
-
-        w = shared['w']
+                    if logger.can_display and logger.per_epoch:
+                        s.append(f'{logger.name}: {logger.log[-1]:5}')
+                if len(s) > 1:
+                    print(', '.join(s))
     
-    # Log final loggers
-    for logger in loggers:
-        if not logger.per_epoch:
-            logger.log(logger.logging_func(w))
-    if verbose:
-        s = [f'Training complete']
+        # Log final loggers
         for logger in loggers:
-            if logger.can_display and (not logger.per_epoch):
-                s.append(f'{logger.name}: {logger.log:5}')
-        if len(s) > 1:
-            print(', '.join(s))
-    
+            if not logger.per_epoch:
+                logger.log(logger.logging_func(w))
+        if verbose:
+            s = [f'Training complete']
+            for logger in loggers:
+                if logger.can_display and (not logger.per_epoch):
+                    s.append(f'{logger.name}: {logger.log:5}')
+            if len(s) > 1:
+                print(', '.join(s))
     return w
 
 

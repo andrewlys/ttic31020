@@ -1,11 +1,42 @@
 from typing import Tuple, List, Optional
 import linclass
 import numpy as np
-import utils
+from . import utils
 from .module import Module
 from .module import Loss
+from functools import partial
+
 SEED = 0
 np.random.seed(SEED)
+
+def train_grad(X, y, model, loss, params: np.ndarray, batch: Optional[np.ndarray] = None) -> np.ndarray:
+    '''
+    Returns the gradient of the training objective w.r.t. parameters,
+    calculated on a batch of training samples.
+
+    Args:
+        params: Trainable parameters, in the same format as self.model.get_params().
+        batch: (default None) Indices of samples to calculate objective on. If None,
+            calculate objective on all samples.
+    '''
+    if batch is None:
+        # All data is in a batch
+        batch = slice(None)
+
+    model.set_params(params)
+    #### TASK 5 CODE
+    # Forward pass
+    model.forward(X[batch])
+    loss.forward(model._output, y[batch])
+
+    # Backward pass
+    loss.backward()
+    model.backward(loss._grad_input)
+
+    grad_params = model.get_grad_params() #need to take mean over the samples
+
+    #### TASK 5 CODE
+    return grad_params
 
 class ERMNeuralNetClassifier(linclass.Classifier):
     '''
@@ -57,7 +88,6 @@ class ERMNeuralNetClassifier(linclass.Classifier):
         assert X.shape[0] == y.shape[0]
 
         m = X.shape[0]
-
         # Define training objective
         def train_obj(params: np.ndarray, batch: Optional[np.ndarray] = None) -> float:
             '''
@@ -80,39 +110,13 @@ class ERMNeuralNetClassifier(linclass.Classifier):
 
             loss_val = self.loss._output
             return loss_val
+        
+        train_grad_bound = partial(train_grad, X, y, self.model, self.loss)
 
         # Define training gradient
-        def train_grad(params: np.ndarray, batch: Optional[np.ndarray] = None) -> np.ndarray:
-            '''
-            Returns the gradient of the training objective w.r.t. parameters,
-            calculated on a batch of training samples.
-
-            Args:
-                params: Trainable parameters, in the same format as self.model.get_params().
-                batch: (default None) Indices of samples to calculate objective on. If None,
-                    calculate objective on all samples.
-            '''
-            if batch is None:
-                # All data is in a batch
-                batch = slice(None)
-
-            self.model.set_params(params)
-            #### TASK 5 CODE
-            # Forward pass
-            self.model.forward(X[batch])
-            self.loss.forward(self.model._output, y[batch])
-
-            # Backward pass
-            self.loss.backward()
-            self.model.backward(self.loss._grad_input)
-
-            grad_params = self.model.get_grad_params() #need to take mean over the samples
-            
-            #### TASK 5 CODE
-            return grad_params
 
         self.sgd_loggers = [
-            utils.SGDLogger('train_obj', train_obj, can_display=True, per_epoch=True),
+            utils.SGDLogger('train_obj', train_obj, can_display=True, per_epoch=False),
         ] + sgd_kwargs.pop('loggers', [])
 
         # Switch to training mode to enable dropout, if present in the model
@@ -121,7 +125,7 @@ class ERMNeuralNetClassifier(linclass.Classifier):
         # Optimize using SGD
         self.params = utils.SGD(
             self.params0,
-            train_grad,
+            train_grad_bound,
             m,
             loggers=self.sgd_loggers,
             **sgd_kwargs

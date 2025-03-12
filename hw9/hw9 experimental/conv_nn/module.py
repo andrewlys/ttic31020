@@ -1,6 +1,7 @@
 import abc
 from typing import Tuple, List, Optional
 import numpy as np
+import gc
 SEED = 0
 np.random.seed(SEED)
 
@@ -140,10 +141,8 @@ class Sequential(Module):
         self._input = x
         n_layers = len(self.layers)
         for i in range(n_layers):
-            _output_prev = self._input if i == 0 else self.layers[i-1]._output
-            self.layers[i].forward(_output_prev)
+            self.layers[i].forward(self._input if i == 0 else self.layers[i-1]._output)
         self._output = self._input if n_layers == 0 else self.layers[-1]._output
-
         self._check_forward_attrs()
 
     def backward(self, grad_output: np.ndarray):
@@ -157,7 +156,8 @@ class Sequential(Module):
         for i in range(n_layers-1, -1, -1):
             _grad_output_next = self._grad_output if i == n_layers-1 else self.layers[i+1]._grad_input
             self.layers[i].backward(_grad_output_next)
-        self._grad_input = self.grad_output if n_layers == 0 else self.layers[0]._grad_input
+            gc.collect()
+        self._grad_input = self._grad_output if n_layers == 0 else self.layers[0]._grad_input
         #### TASK 1 CODE
         self._check_backward_attrs()
 

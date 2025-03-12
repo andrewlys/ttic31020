@@ -1,5 +1,5 @@
 import numpy as np
-import utils
+from . import utils
 from .module import Loss
 SEED = 0
 np.random.seed(SEED)
