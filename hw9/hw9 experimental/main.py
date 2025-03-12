@@ -48,7 +48,7 @@ if __name__ == '__main__':
     loss = MultiLogisticLoss(k=10)
     cnn_clf = ERMNeuralNetClassifier(model, loss)
     sgd_kwargs = {
-        'batch_size': 64,
+        'batch_size': 32,
         'n_epochs': 25,
         'eta': 0.01,
         'verbose': True, # Enable printing INSIDE SGD

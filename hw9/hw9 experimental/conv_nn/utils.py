@@ -160,7 +160,7 @@ def SGD(
         # Log final loggers
         for logger in loggers:
             if not logger.per_epoch:
-                logger.log(logger.logging_func(w))
+                logger.log = logger.logging_func(w)
         if verbose:
             s = [f'Training complete']
             for logger in loggers:
