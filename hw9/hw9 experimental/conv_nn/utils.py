@@ -102,6 +102,7 @@ def SGD(
     
     # with multiprocessing.Manager() as manager:
     w = w0
+    num_workers = os.cpu_count()
 
     for logger in loggers:
         if logger.per_epoch:
@@ -128,18 +129,20 @@ def SGD(
                 shuffle_idxs = np.random.randint(0, high=m, size=m)
             n_batches = m // batch_size
             batch_idxs = np.array_split(shuffle_idxs, n_batches)
-            for i in range(-(n_batches // - 4)): # ceil divide hack
-                with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
+            for i in range(-(n_batches // - num_workers)): # ceil divide hack
+                with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
                     # Train on mini batch
                     futures = [
-                        executor.submit(grad_calculator, shared['w'], b_idxs) for b_idxs in batch_idxs[i*4:(i+1)*4]
+                        executor.submit(grad_calculator, shared['w'], b_idxs) 
+                        for b_idxs in batch_idxs[i*num_workers:(i+1)*num_workers]
                     ]
                     for future in concurrent.futures.as_completed(futures):
                         g = future.result()
                         with shared['lock']:
                             shared['w'] = shared['w'] - eta * g
+                if i == -(n_batches // - num_workers // 2):
+                    print(f'Epoch {epoch} halfway through')
             w = shared['w']
-            gc.collect()
             # Log per epoch loggers
             for logger in loggers:
                 if logger.per_epoch:

@@ -1,7 +1,7 @@
 from typing import Tuple, List, Optional
 import numpy as np
 from .module import Module
-from .conv import Convolve
+from .conv import convolve, convolve_gradient_weight, convolve_gradient_input
 from .conv import interweave_with_zeros
 SEED = 0
 np.random.seed(SEED)
@@ -21,7 +21,7 @@ class Linear(Module):
             out_dim: Number of output dimensions (number of outgoing connections
                 in the network).
         '''
-        super(Linear, self).__init__()
+        super().__init__()
 
         # Initialize trainable parameters
         self.weight = np.random.normal(0, np.sqrt(2/in_dim), (in_dim, out_dim))
@@ -37,10 +37,13 @@ class Linear(Module):
             x: Data features. shape (m, in_dim)
         '''
         assert x.shape[1] == self.weight.shape[0]
-
+        _output = x @ self.weight + self.bias
+        if not self.train:
+            return _output
         self._input = x
-        self._output = x @ self.weight + self.bias
+        self._output = _output
         self._check_forward_attrs()
+        return _output
 
     def backward(self, grad_output: np.ndarray) -> np.ndarray:
         '''
@@ -94,16 +97,20 @@ class ReLU(Module):
     ReLU activation, not trainable. z = max(x, 0) for each input value x.
     '''
     def __init__(self):
-        super(ReLU, self).__init__()
+        super().__init__()
 
     def forward(self, x: np.ndarray):
         '''
         Args:
             x: Data features. shape (m, in_dim)
         '''
+        _output = np.maximum(0., x)
+        if not self.train:
+            return _output
         self._input = x
-        self._output = np.maximum(0., self._input)
+        self._output = _output
         self._check_forward_attrs()
+        return _output
 
     def backward(self, grad_output: np.ndarray) -> np.ndarray:
         '''
@@ -131,12 +138,14 @@ class Dropout(Module):
                 If p is 0, then no nodes are dropped, i.e. we get the identity layer.
         '''
         assert 0 <= p <= 1
-        super(Dropout, self).__init__()
+        super().__init__()
         self.p = p
 
-    def forward(self, x: np.ndarray):
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        if not self.train:
+            return x
         self._input = x
-        self._output = self._input
+        self._output = x
         if self.train and (not np.isclose(self.p, 0)):
             # In training mode and drop probability is positive
 
@@ -149,6 +158,7 @@ class Dropout(Module):
 
             self._output *= self.mask
         self._check_forward_attrs()
+        return self._output
 
     def backward(self, grad_output: np.ndarray):
         self._grad_output = grad_output
@@ -160,7 +170,7 @@ class Dropout(Module):
 
 class Conv(Module):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: int, stride: int, padding: int):
-        super(Conv).__init__()
+        super().__init__()
         # hyperparams
         self.in_channels = in_channels
         self.out_channels = out_channels # also number of layers in this conv module
@@ -192,10 +202,13 @@ class Conv(Module):
         assert x.shape[-1] == self.in_channels # check if the number of input channels is correct
         assert x.shape[1] == x.shape[2] # check if the input is square
         assert self.weight.shape[3] == self.in_channels # check if the number of input channels in the weight is correct
-
+        _output = convolve(x, self.weight, self.stride, self.padding) + self.bias
+        if not self.train:
+            return _output
         self._input = x
-        self._output = Convolve(x, self.weight, self.stride, self.padding) + self.bias
+        self._output = _output
         self._check_forward_attrs()
+        return _output
         
     def backward(self, grad_output: np.ndarray) -> np.ndarray:
         '''
@@ -212,19 +225,11 @@ class Conv(Module):
         # these blog posts helped me get the dilation and padding right
         # https://hideyukiinada.github.io/cnn_backprop_strides2.html
         # https://medium.com/latinxinai/vectorized-convolution-operation-using-numpy-b122fd52fba3
-
-        # init conv args
-        conv_grad_in = interweave_with_zeros(grad_output, self.stride - 1)
-        conv_ker = np.transpose(np.rot90(self.weight, 2, (1, 2)), (3, 1, 2, 0))
-        conv_input = np.transpose(self._input, (3, 1, 2, 0))
-        conv_grad_w = np.transpose(conv_grad_in, (3, 1, 2, 0))
         # set params
         self._grad_output = grad_output
         self._grad_bias = np.mean(grad_output, axis = 0) # DON'T FORGET TO TAKE THE MEAN OVER THE SAMPLES
-        self._grad_input = Convolve(conv_grad_in, conv_ker, 1, self.kernel_size // 2)
-        self._grad_weight = Convolve(conv_input, conv_grad_w, 1, self.kernel_size // 2) # DON'T FORGET TO TAKE THE MEAN OVER THE SAMPLES
-        self._grad_weight /= self._input.shape[0]
-        self._grad_weight = np.transpose(self._grad_weight, (3, 1, 2, 0))
+        self._grad_input = convolve_gradient_input(self._input, self.weight, grad_output, self.stride, self.padding)
+        self._grad_weight = convolve_gradient_weight(self._input, self.weight, grad_output, self.stride, self.padding)/self._input.shape[0] # DON'T FORGET TO TAKE THE MEAN OVER THE SAMPLES
         # sanity check
         self._check_backward_attrs()
 
@@ -252,7 +257,7 @@ class Conv(Module):
 
 class maxpool(Module):
     def __init__(self, kernel_size: int = 2, stride: int = 2) -> None:
-        super(maxpool).__init__()
+        super().__init__()
         self.kernel_size = kernel_size
         self.stride = stride
         # param to account for intermediary step in forward pass
@@ -274,10 +279,15 @@ class maxpool(Module):
         dil_shape = (m, h_out, w_out, self.kernel_size, self.kernel_size, c)
         dil_strides = (m_stride, h_stride * self.stride, w_stride * self.stride, h_stride, w_stride, c_stride)
         # cache stuff
-        self._dil_input = np.lib.stride_tricks.as_strided(x, dil_shape, dil_strides)
+        _dil_input= np.lib.stride_tricks.as_strided(x, dil_shape, dil_strides)
+        _output = np.max(_dil_input, axis = (3, 4))
+        if not self.train:
+            return _output
         self._input = x
-        self._output = np.max(self._dil_input, axis = (3, 4))
+        self._dil_input = _dil_input
+        self._output = np.max(_dil_input, axis = (3, 4))
         self._check_forward_attrs()
+        return _output
     
     def backward(self, grad_output: np.ndarray) -> np.ndarray:
         '''
@@ -308,7 +318,7 @@ class maxpool(Module):
 class batchnorm(Module):
     def __init__(self, channels, eps = 1e-5):
         # https://arxiv.org/pdf/1502.03167
-        super(batchnorm).__init__()
+        super().__init__()
         self.channels = channels
         self.eps = eps
         self.mean = np.zeros((1,1,1,channels))
@@ -320,7 +330,7 @@ class batchnorm(Module):
         self._grad_weight = None
         self._grad_bias = None
         
-    def forward(self, x: np.ndarray):
+    def forward(self, x: np.ndarray) -> np.ndarray:
         '''
         Forward pass of the batchnorm layer.
         Args:
@@ -328,11 +338,17 @@ class batchnorm(Module):
             h and w are assumed to be the same.
         '''
         assert x.ndim == 4
+        mean = np.mean(x, axis = (0, 1, 2), keepdims = True)
+        var = np.var(x, axis = (0, 1, 2), keepdims = True)
+        _output = (x - mean) / np.sqrt(var + self.eps) * self.weight + self.bias
+        if not self.train:
+            return _output
         self._input = x
-        self.mean = np.mean(x, axis = (0, 1, 2), keepdims = True)
-        self.var = np.var(x, axis = (0, 1, 2), keepdims = True)
-        self._output = (x - self.mean) / np.sqrt(self.var + self.eps) * self.weight + self.bias
+        self.mean = mean
+        self.var = var
+        self._output = _output
         self._check_forward_attrs()
+        return _output
     
     def backward(self, grad_output):
         '''
@@ -375,7 +391,7 @@ class batchnorm(Module):
 
 class flatten(Module):
     def __init__(self):
-        super(flatten).__init__()
+        super().__init__()
     def forward(self, x: np.ndarray) -> np.ndarray:
         '''
         Forward pass of the flatten layer.
@@ -384,9 +400,13 @@ class flatten(Module):
             h and w are assumed to be the same.
         '''
         assert x.ndim == 4
+        _output = x.reshape(x.shape[0], -1)
+        if not self.train:
+            return _output
         self._input = x
         self._output = x.reshape(x.shape[0], -1)
         self._check_forward_attrs()
+        return _output
     
     def backward(self, grad_output):
         '''

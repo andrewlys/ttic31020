@@ -30,24 +30,26 @@ if __name__ == '__main__':
 
     # Create model
     model = Sequential([
-        Conv(1, 32, 3, 1, 1), 
-        batchnorm(32),
+        Conv(1, 32, 4, 2, 1), # 14 x 14 x 32
+        ReLU(), 
+        batchnorm(32), 
+        Conv(32, 64, 4, 2, 2), # 8 x 8 x 64
         ReLU(),
-        maxpool(2, 2), # 14 x 14 x 32 
-        Conv(32, 64, 3, 1, 1),
         batchnorm(64),
+        Conv(64, 128, 3, 1, 1), # 8 x 8 x 128
+        maxpool(2, 2), # 4 x 4 x 128
         ReLU(),
-        maxpool(2, 2), # 7 x 7 x 64 
+        batchnorm(128),
         flatten(),
-        Linear(7*7*64, 256),
+        Linear(4*4*128, 256),
         Dropout(0.5),
         Linear(256, 10)
     ])
     loss = MultiLogisticLoss(k=10)
     cnn_clf = ERMNeuralNetClassifier(model, loss)
     sgd_kwargs = {
-        'batch_size': 128,
-        'n_epochs': 1,
+        'batch_size': 64,
+        'n_epochs': 25,
         'eta': 0.01,
         'verbose': True, # Enable printing INSIDE SGD
         'verbose_epoch_interval': 1,

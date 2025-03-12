@@ -103,10 +103,12 @@ class ERMNeuralNetClassifier(linclass.Classifier):
                 batch = slice(None)
 
             self.model.set_params(params)
+            self.model.eval_mode()
 
             # Forward pass
             self.model.forward(X[batch])
             self.loss.forward(self.model._output, y[batch])
+            self.model.train_mode()
 
             loss_val = self.loss._output
             return loss_val

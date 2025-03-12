@@ -139,10 +139,10 @@ class Sequential(Module):
         Computes a forward pass sequentially on the network layers.
         '''
         self._input = x
+        self._output = x
         n_layers = len(self.layers)
         for i in range(n_layers):
-            self.layers[i].forward(self._input if i == 0 else self.layers[i-1]._output)
-        self._output = self._input if n_layers == 0 else self.layers[-1]._output
+            self._output = self.layers[i].forward(self._output)
         self._check_forward_attrs()
 
     def backward(self, grad_output: np.ndarray):
