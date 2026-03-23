@@ -1,4 +1,5 @@
-import numpy as np
+import numpy
+import cupy as np
 from numpy import array,newaxis,ones,zeros,shape
 import matplotlib.pyplot as plt
 from scipy.linalg import sqrtm,det,inv,pinv # scipy.linalg is a bit more full-features, includes additional routines, 

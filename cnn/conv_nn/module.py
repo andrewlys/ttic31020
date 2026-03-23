@@ -1,6 +1,7 @@
 import abc
 from typing import Tuple, List, Optional
-import numpy as np
+import numpy
+import cupy as np
 import gc
 SEED = 0
 np.random.seed(SEED)

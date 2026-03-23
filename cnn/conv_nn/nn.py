@@ -1,6 +1,7 @@
 from typing import Tuple, List, Optional
-import linclass
-import numpy as np
+import numpy
+import cupy as np
+from . import linclass
 from . import utils
 from .module import Module
 from .module import Loss

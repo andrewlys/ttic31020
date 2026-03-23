@@ -1,4 +1,5 @@
-import numpy as np
+import numpy
+import cupy as np
 SEED = 0
 np.random.seed(SEED)
 

@@ -1,5 +1,6 @@
 from typing import Tuple, List, Optional
-import numpy as np
+import numpy
+import cupy as np
 from .module import Module
 from .conv import convolve, convolve_gradient_weight, convolve_gradient_input
 from .conv import interweave_with_zeros

@@ -1,4 +1,5 @@
-import numpy as np
+import numpy
+import cupy as np
 from . import utils
 from .module import Loss
 SEED = 0

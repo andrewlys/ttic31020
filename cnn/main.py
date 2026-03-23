@@ -1,4 +1,5 @@
-import numpy as np
+import numpy 
+import cupy as np
 import time
 from conv_nn import utils
 from conv_nn.module import Sequential
